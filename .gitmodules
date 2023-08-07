@@ -1,0 +1,6 @@
+[submodule "telnet"]
+	path = telnet
+	url = https://github.com/KazDragon/telnetpp
+[submodule "ftp"]
+	path = ftp
+	url = https://github.com/embeddedmz/ftpclient-cpp
