@@ -1,0 +1,5 @@
+find_package(GTest CONFIG REQUIRED)
+include_directories(${GTest_INCLUDE_DIRS})
+add_executable(gtests tests.cpp)
+target_link_libraries(gtests GTest::gtest GTest::gtest_main)
+add_test(NAME UNIT_TESTS COMMAND gtests)

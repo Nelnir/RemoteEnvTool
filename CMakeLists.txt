@@ -22,7 +22,7 @@ set(SOURCES
 add_executable(main ${SOURCES})
 target_link_libraries(main PRIVATE CURL::libcurl ftpclient)
 
-option(BUILD_TESTS "Build tests" OFF)
+option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
     enable_testing()
     include(CTest)
