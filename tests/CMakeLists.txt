@@ -1,5 +1,5 @@
 find_package(GTest CONFIG REQUIRED)
 include_directories(${GTest_INCLUDE_DIRS})
-add_executable(gtests tests.cpp)
+add_executable(gtests tests.cpp FileTestHelper.hpp ../src/PathMonitor.cpp)
 target_link_libraries(gtests GTest::gtest GTest::gtest_main)
 add_test(NAME UNIT_TESTS COMMAND gtests)

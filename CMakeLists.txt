@@ -14,9 +14,12 @@ add_subdirectory(ftp)
 add_subdirectory(telnet)
 include_directories(ftp/FTP)
 include_directories(telnet/include)
+include_directories(include)
+
 
 set(SOURCES
     main.cpp
+    src/PathMonitor.cpp
 )
 
 add_executable(main ${SOURCES})
