@@ -47,6 +47,9 @@ public:
         std::filesystem::remove(path);
     }
     
+    bool exists(const std::string& path){
+        return std::filesystem::exists(path);
+    }
 
 private:
     void createDirectories(const std::filesystem::path &dirPath) {

@@ -20,6 +20,7 @@ include_directories(include)
 set(SOURCES
     main.cpp
     src/PathMonitor.cpp
+    src/Configuration.cpp
 )
 
 add_executable(main ${SOURCES})

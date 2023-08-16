@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "PathMonitor.hpp"
 #include "FileTestHelper.hpp"
+#include "Configuration.hpp"
 
 TEST(PathMonitorTest, Initialization)
 {
@@ -39,7 +40,7 @@ TEST(PathMonitorTest, UpdatingFile)
     helper.createDirectory("test");
     helper.createFile("test/update.txt");
     PathMonitor monitor("test");
-    std::this_thread::sleep_for(std::chrono::milliseconds(5)); // in order to force change of last modified date
+    std::this_thread::sleep_for(std::chrono::milliseconds(5)); // in order to force change of 'last modified' date
     helper.updateFile("test/update.txt", "new-content");
     EXPECT_TRUE(monitor.check());
     EXPECT_EQ(monitor.filesUpdated().size(), 1);
