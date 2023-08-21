@@ -11,7 +11,7 @@ public:
         }
     }
 
-    void createFile(const std::string &path, const std::string &content = "") {
+    bool createFile(const std::string &path, const std::string &content = "") {
         // Extract the directory path from the provided path and create directories
         std::filesystem::path fsPath(path);
         if (fsPath.has_parent_path()) {
@@ -24,7 +24,9 @@ public:
             out << content;
             createdFiles.push_back(path);
             out.close();
+            return true;
         }
+        return false;
     }
 
     void createDirectory(const std::string &dirPath) {
@@ -43,8 +45,8 @@ public:
         }
     }
 
-    void deleteFile(const std::string &path) {
-        std::filesystem::remove(path);
+    bool deleteFile(const std::string &path) {
+        return std::filesystem::remove(path);
     }
     
     bool exists(const std::string& path){

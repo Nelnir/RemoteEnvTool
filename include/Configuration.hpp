@@ -17,7 +17,7 @@ enum class ConfigKey {
     Port,            ///< Currently supported only telnet (23)
     Path,            ///< Path to sources which will be monitored for changes
     RemotePath,      ///< Path to remote sources which will be updated
-    Difftool,         ///< Path to difftool used for comparing file differences
+    Difftool,        ///< Path to difftool used for comparing file differences
     None
 };
 

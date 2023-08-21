@@ -39,7 +39,7 @@ bool Configuration::readFile()
         std::istringstream iss(line);
         std::string key, value;
         if (!(iss >> key >> value)){
-            std::cerr << "Malformed line in config: " + line << std::endl;
+            std::cerr << "Malformed line in config: " << line << std::endl;
             continue;
         }
         auto itr = m_configData.find(stringToKey(key));
