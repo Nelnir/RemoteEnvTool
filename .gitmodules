@@ -1,3 +1,6 @@
 [submodule "telnet"]
 	path = telnet
 	url = https://github.com/KazDragon/telnetpp
+[submodule "sfml"]
+	path = sfml
+	url = https://github.com/SFML/SFML.git

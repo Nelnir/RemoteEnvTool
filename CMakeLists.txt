@@ -8,7 +8,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 find_package(Boost 1.70 REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
+set(BUILD_SHARED_LIBS FALSE)
+
+add_subdirectory(sfml)
 add_subdirectory(telnet)
+include_directories(sfml/include)
 include_directories(telnet/include)
 include_directories(include)
 
@@ -21,7 +25,7 @@ set(SOURCES
 )
 
 add_executable(main ${SOURCES})
-target_link_libraries(main PRIVATE)
+target_link_libraries(main PRIVATE sfml-network sfml-main)
 
 option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
