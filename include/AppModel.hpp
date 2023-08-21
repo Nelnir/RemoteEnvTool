@@ -3,14 +3,15 @@
 
 #include "PathMonitor.hpp"
 #include "Configuration.hpp"
+#include <SFML/Network.hpp>
 
 class AppModel{
 public:
     AppModel();
-    void test();
 private:
     PathMonitor m_monitor;
     Configuration m_configuration;
+    sf::Ftp m_ftp;
 };
 
 

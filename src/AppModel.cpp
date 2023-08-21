@@ -1,11 +1,7 @@
 #include "AppModel.hpp"
+#include <iostream>
 
 AppModel::AppModel()
 {
 
-}
-
-void AppModel::test()
-{
-   
 }

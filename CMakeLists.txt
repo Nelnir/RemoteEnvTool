@@ -22,6 +22,8 @@ set(SOURCES
     src/PathMonitor.cpp
     src/Configuration.cpp
     src/AppModel.cpp
+    src/AppCLIView.cpp
+    src/APPCLIController.cpp
 )
 
 add_executable(main ${SOURCES})
