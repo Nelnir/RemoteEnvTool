@@ -13,7 +13,7 @@ struct FileData {
 
 class PathMonitor {
 public:
-    PathMonitor(const std::string& path);
+    PathMonitor(const std::string& path = "");
     ~PathMonitor();
     bool check();
     std::list<std::string> filesAddedd() const { return m_filesAdded; }
