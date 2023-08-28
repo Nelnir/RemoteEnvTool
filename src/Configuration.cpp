@@ -33,6 +33,11 @@ bool Configuration::setHostValue(const std::string& host, const HostConfig& key,
         case HostConfig::Password: itr->second.m_password = value; break;
         case HostConfig::Username: itr->second.m_username = value; break;
         case HostConfig::RemotePath: itr->second.m_remotePath = value; break;
+        case HostConfig::HostName:
+            auto copy = itr->second;
+            m_hosts.erase(itr);
+            m_hosts.emplace(value, copy);
+        break;
     }
     return true;
 }

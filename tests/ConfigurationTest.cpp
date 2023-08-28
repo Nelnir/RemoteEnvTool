@@ -40,6 +40,7 @@ TEST(ConfigurationTest, AddingNewHost)
         Configuration conf(file);
         EXPECT_EQ(conf.getHosts().size(), 1);
         EXPECT_TRUE(conf.addHost("NEW-HOST", HostData("user", "pass", "path")));
+        EXPECT_FALSE(conf.addHost("NEW-HOST", HostData("user1", "pass2", "path3")));
         EXPECT_EQ(conf.getHosts().size(), 2);
     }
     {
@@ -49,6 +50,46 @@ TEST(ConfigurationTest, AddingNewHost)
         EXPECT_EQ(conf.getHostValue("NEW-HOST", HostConfig::Username), "user");
         EXPECT_EQ(conf.getHostValue("NEW-HOST", HostConfig::Password), "pass");
         EXPECT_EQ(conf.getHostValue("NEW-HOST", HostConfig::RemotePath), "path");
+    }
+    helper.deleteFile(file);
+}
+
+TEST(ConfigurationTest, UpdatingHost)
+{
+    const std::string file = "conf.txt";
+    FileTestHelper helper;
+    {
+        Configuration conf(file);
+        const std::string host = conf.getHosts().front();
+        EXPECT_TRUE(conf.setHostValue(host, HostConfig::Password, "haslo"));
+        EXPECT_EQ(conf.getHostValue(host, HostConfig::Password), "haslo");
+    }
+    helper.deleteFile(file);
+}
+
+TEST(ConfigurationTest, DeletingHost)
+{
+    const std::string file = "conf.txt";
+    FileTestHelper helper;
+    {
+        Configuration conf(file);
+        const std::string host = conf.getHosts().front();
+        EXPECT_TRUE(conf.deleteHost(host));
+        EXPECT_EQ(conf.getHosts().size(), 0);
+    }
+    helper.deleteFile(file);
+}
+
+TEST(ConfigurationTest, RenamingHost)
+{
+    const std::string file = "conf.txt";
+    FileTestHelper helper;
+    {
+        Configuration conf(file);
+        const std::string host = conf.getHosts().front();
+        EXPECT_TRUE(conf.setHostValue(host, HostConfig::HostName, "new"));
+        EXPECT_FALSE(conf.getHostValue(host, HostConfig::HostName) == "new");
+        EXPECT_EQ(conf.getHostValue("new", HostConfig::HostName), "new");
     }
     helper.deleteFile(file);
 }
