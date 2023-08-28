@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <unordered_map>
 
 /**
  * @enum ConfigKey
@@ -13,12 +14,37 @@
  * or set specific configuration values within the Configuration class.
  */
 enum class ConfigKey {
-    Host,            ///< Host which to connect to
-    Port,            ///< Currently supported only telnet (23)
-    Path,            ///< Path to sources which will be monitored for changes
-    RemotePath,      ///< Path to remote sources which will be updated
+    DefaultHost,     ///< Default Host
+    LocalPath,       ///< Path to local sources which will be monitored for changes
     Difftool,        ///< Path to difftool used for comparing file differences
+    Port,            ///< Currently supported only telnet (23)
     None
+};
+
+/**
+ * @enum HostConfig
+ * @brief Represents the keys used for host settings.
+ * 
+ * This enumeration lists all the possible configuration keys
+ * used throughout the application for one host configuration.
+ */
+enum class HostConfig {
+    HostName,       ///< Name of host which to connect
+    RemotePath,     ///< Path to remote sources which will be updated
+    Username,       ///< Username to log in to FTP server
+    Password,       ///< Password to log in to FTP server
+    None
+};
+
+/**
+ * @struct HostData
+ * @brief Holds all information regarding connecting to specific host
+ */
+struct HostData{
+    std::string m_remotePath;
+    std::string m_username;
+    std::string m_password;
+    HostData(const std::string& u = "", const std::string& p = "", const std::string& path = "") : m_remotePath(path), m_username(u), m_password(p) {}
 };
 
 /**
@@ -70,13 +96,21 @@ public:
     bool saveFile() const;
 
     bool setValue(const ConfigKey& key, const std::string& value);
+    bool setHostValue(const std::string& host, const HostConfig& key, const std::string& value);
     std::string getValue(const ConfigKey& key) const;
+    std::string getHostValue(const std::string& host, const HostConfig& key) const;
+    std::list<std::string> getHosts() const;
+    bool deleteHost(const std::string& host);
+    bool addHost(const std::string& host, const HostData& data = {});
 private:
     void setDefaultValues();
-    std::string keyToString(const ConfigKey& key) const;
-    ConfigKey stringToKey(const std::string& key);
+    static std::string keyToString(const ConfigKey& key);
+    static ConfigKey stringToKey(const std::string& key);
+    static std::string keyToString(const HostConfig& key);
+    static HostConfig stringToHostKey(const std::string& key);
 
     std::map<ConfigKey, std::string> m_configData;
+    std::unordered_map<std::string, HostData> m_hosts;
     const std::string m_configFile;
 };
 
