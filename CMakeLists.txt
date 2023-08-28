@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 
-find_package(Boost 1.70 REQUIRED)
+find_package(Boost 1.70 REQUIRED COMPONENTS program_options)
 include_directories(${Boost_INCLUDE_DIRS})
 
 set(BUILD_SHARED_LIBS FALSE)
@@ -27,7 +27,7 @@ set(SOURCES
 )
 
 add_executable(main ${SOURCES})
-target_link_libraries(main PRIVATE sfml-network sfml-main)
+target_link_libraries(main PRIVATE sfml-network sfml-main Boost::program_options)
 
 option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
