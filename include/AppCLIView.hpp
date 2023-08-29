@@ -28,12 +28,13 @@ public:
     void executeFeature(AppCLIController& controller, const int& option);
 
     void update();
-private:
-    void drawMenu();
-    void checkForUnrecognizedOptions(po::parsed_options& parsed);
 
     void writeRed(const std::string& text);
     void writeGreen(const std::string& text);
+    void writeWhite(const std::string& text);
+private:
+    void drawMenu();
+    void checkForUnrecognizedOptions(po::parsed_options& parsed);
 };
 
 #endif

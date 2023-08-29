@@ -21,10 +21,17 @@ private:
     std::list<Observer*> m_observers;
 };
 
+enum class FileChangeType{
+    Added,
+    Removed,
+    Updated
+};
+
 class AppModel : public Subject {
 public:
     AppModel();
     std::string currentHost() const;
+    std::list<std::string> changedFiles(const FileChangeType& type) const;
 private:
     PathMonitor m_monitor;
     Configuration m_configuration;

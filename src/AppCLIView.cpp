@@ -2,12 +2,13 @@
 #include <iostream>
 
 AppCLIView::AppCLIView(const AppModel& model, const int& ar, char** av) : m_model(model), argc(ar), argv(av),
-opt("Allowed options"), m_features(model)
+opt("Allowed options"), m_features(model, *this)
 {
     opt.add_options()
     ("help", "produce help message")
     ("host", po::value<std::string>(), "set host which to connect")
     ("interactive", "enable interactive mode")
+    ("list-file", "lists files changed")
     ;
 
 #ifdef _WIN32
@@ -17,17 +18,12 @@ opt("Allowed options"), m_features(model)
 
 int AppCLIView::show(AppCLIController& controller)
 {
-    std::vector<std::string> simulated_args = {"--interactive"};
+    std::vector<std::string> simulated_args = {"--help"};
     try{
         po::variables_map vm;
         po::parsed_options parsed = po::command_line_parser(simulated_args).options(opt).allow_unregistered().run();
         po::store(parsed, vm);
         //po::store(po::parse_command_line(argc, argv, opt), vm);
-
-        if(!vm.count("host") && !vm.count("interactive")){
-            writeRed("--host [arg] or --interactive must be passed at least");
-            return 1;
-        }
 
         po::notify(vm);    
 
@@ -37,6 +33,8 @@ int AppCLIView::show(AppCLIController& controller)
             std::cout << opt << "\n";
         if(vm.count("interactive"))
             return interactive(controller);
+        if(vm.count("list-file"))
+            executeFeature(controller, AppCLIFeatures::LISTS_FILE());
         
 
     } catch (const po::error& e) {
@@ -124,4 +122,9 @@ void AppCLIView::writeRed(const std::string& text)
 #ifdef _WIN32
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 #endif
+}
+
+void AppCLIView::writeWhite(const std::string& text)
+{
+    std::cout << text << std::endl;
 }
