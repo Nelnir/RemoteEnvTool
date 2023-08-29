@@ -23,7 +23,8 @@ set(SOURCES
     src/Configuration.cpp
     src/AppModel.cpp
     src/AppCLIView.cpp
-    src/APPCLIController.cpp
+    src/AppCLIController.cpp
+    src/AppCLIFeatures.cpp
 )
 
 add_executable(main ${SOURCES})

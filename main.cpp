@@ -5,7 +5,7 @@ int main(int argc, char** argv)
 {
     AppModel model;
     AppCLIController controller(model);
-    AppCLIView view(argc, argv);
-    view.show(controller);
-    return 0;
+    AppCLIView view(model, argc, argv);
+    model.attach(&view);
+    return view.show(controller);
 }

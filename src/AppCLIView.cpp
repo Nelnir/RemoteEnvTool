@@ -1,12 +1,13 @@
 #include "AppCLIView.hpp"
 #include <iostream>
 
-AppCLIView::AppCLIView(const int& ar, char** av) : argc(ar), argv(av),
-opt("Allowed options")
+AppCLIView::AppCLIView(const AppModel& model, const int& ar, char** av) : m_model(model), argc(ar), argv(av),
+opt("Allowed options"), m_features(model)
 {
     opt.add_options()
     ("help", "produce help message")
     ("host", po::value<std::string>(), "set host which to connect")
+    ("interactive", "enable interactive mode")
     ;
 
 #ifdef _WIN32
@@ -14,26 +15,80 @@ opt("Allowed options")
 #endif
 }
 
-void AppCLIView::show(AppCLIController& controller)
+int AppCLIView::show(AppCLIController& controller)
 {
-    std::vector<std::string> simulated_args = {"--host", "devcoo5"};
+    std::vector<std::string> simulated_args = {"--interactive"};
+    try{
+        po::variables_map vm;
+        po::parsed_options parsed = po::command_line_parser(simulated_args).options(opt).allow_unregistered().run();
+        po::store(parsed, vm);
+        //po::store(po::parse_command_line(argc, argv, opt), vm);
 
-    po::variables_map vm;
-    po::parsed_options parsed = po::command_line_parser(simulated_args).options(opt).allow_unregistered().run();
-    po::store(parsed, vm);
-    //po::store(po::parse_command_line(argc, argv, opt), vm);
-    po::notify(vm);    
+        if(!vm.count("host") && !vm.count("interactive")){
+            writeRed("--host [arg] or --interactive must be passed at least");
+            return 1;
+        }
 
-    checkForUnrecognizedOptions(parsed);
+        po::notify(vm);    
 
-    if (vm.count("help")) {
-        std::cout << opt << "\n";
+        checkForUnrecognizedOptions(parsed);
+
+        if (vm.count("help")) 
+            std::cout << opt << "\n";
+        if(vm.count("interactive"))
+            return interactive(controller);
+        
+
+    } catch (const po::error& e) {
+        writeRed("Error: " + std::string(e.what()));
+        std::cout << opt << std::endl;
+        return 1;
+    }
+    return 0;
+}
+
+int AppCLIView::interactive(AppCLIController& controller)
+{
+    writeGreen("INTERACTIVE MODE");
+    drawMenu();
+    while(true){
+        int option = controller.readMainMenuStep();
+        if(option == AppCLIFeatures::EXIT_OPTION()){
+            break;
+        }
+        executeFeature(controller, option);
+    }
+    return 0;
+}
+
+void AppCLIView::executeFeature(AppCLIController& controller, const int& option)
+{
+    const auto& features = m_features.getFeatures();
+    auto itr = features.find(option);
+
+    if(itr == features.end()){
+        writeRed("Unsupported option");
+        return;
     }
 
-    if (vm.count("host")) {
-        std::cout << "host was set to " << vm["host"].as<std::string>() << ".\n";
-    } else {
-        std::cout << "host was not set.\n";
+    FeatureCallback callback = itr->second.second;
+    callback(controller);
+}
+
+void AppCLIView::update()
+{
+#ifdef _WIN32
+    system("cls");
+#endif
+    drawMenu();
+}
+
+void AppCLIView::drawMenu()
+{
+    writeGreen("Current host: " + m_model.currentHost());
+
+    for(const auto& feature : m_features.getFeatures()){
+        std::cout << '[' << feature.first << "] - " << feature.second.first << std::endl;
     }
 }
 
@@ -42,31 +97,30 @@ void AppCLIView::checkForUnrecognizedOptions(po::parsed_options& parsed)
     std::vector<std::string> unrecognized = po::collect_unrecognized(parsed.options, po::include_positional);
     
     if (!unrecognized.empty()) {
-        setRedColor();
-        std::cout << "Unrecognized options:\n";
+        writeRed("Ignored options:");
         for (const std::string& option : unrecognized) {
-            std::cout << option << "\n";
+            writeRed(option);
         }
-        setWhiteColor();
     }
 }
 
-void AppCLIView::setGreenColor()
+void AppCLIView::writeGreen(const std::string& text)
 {
 #ifdef _WIN32
     SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN);
 #endif
+    std::cout << text << std::endl;
+#ifdef _WIN32
+    SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+#endif
 }
 
-void AppCLIView::setRedColor()
+void AppCLIView::writeRed(const std::string& text)
 {
 #ifdef _WIN32
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED);
 #endif
-}
-
-void AppCLIView::setWhiteColor()
-{
+    std::cerr << text << std::endl;
 #ifdef _WIN32
     SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 #endif
