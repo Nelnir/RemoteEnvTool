@@ -21,7 +21,7 @@ PathMonitor::~PathMonitor()
     }
 }
 
-bool PathMonitor::check()
+bool PathMonitor::check(bool saveSnapshot)
 {
     reset();
     auto currentSnapshot = getSnapshot(m_path);
@@ -42,8 +42,21 @@ bool PathMonitor::check()
         }
     }
 
-    m_data = currentSnapshot;
+    if(saveSnapshot)
+        m_data = currentSnapshot;
     return !m_filesAdded.empty() || !m_filesDeleted.empty() || !m_filesUpdated.empty();
+}
+
+void PathMonitor::reset(const std::string& file)
+{
+    auto itr = m_data.find(file);
+    if(itr == m_data.end()){
+        m_data[file] = {std::filesystem::last_write_time(file).time_since_epoch().count()};
+    } else if(std::filesystem::exists(file)){
+        itr->second.last_modified = std::filesystem::last_write_time(file).time_since_epoch().count();
+    } else{ // file was deleted
+        m_data.erase(itr);
+    }
 }
 
 std::unordered_map<std::string, FileData> PathMonitor::getSnapshot(const std::string &path)
@@ -53,8 +66,9 @@ std::unordered_map<std::string, FileData> PathMonitor::getSnapshot(const std::st
         return snapshot;
         
     for (const auto &entry : fs::recursive_directory_iterator(path)) {
-        if (entry.is_regular_file()) {
-            snapshot[entry.path().string()] = {entry.last_write_time().time_since_epoch().count()};
+        const auto& path = entry.path().string();
+        if (entry.is_regular_file() && (path.find(".cpp") != -1 ||  path.find(".h") != -1)) {
+            snapshot[path] = {entry.last_write_time().time_since_epoch().count()};
         }
     }
     return snapshot;
@@ -83,10 +97,6 @@ bool PathMonitor::readSnapshot()
         int64_t nano;
         if(!(iss >> key >> nano)){
             std::cerr << "Malformed line in config: " << line << std::endl;
-            continue;
-        }
-        if(!std::filesystem::exists(key)){
-            std::cerr << "File: " << key << " doesn't exists." << std::endl;
             continue;
         }
         auto itr = m_data.find(key);

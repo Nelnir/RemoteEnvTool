@@ -15,10 +15,11 @@ class PathMonitor {
 public:
     PathMonitor(const std::string& path = "");
     ~PathMonitor();
-    bool check();
+    bool check(bool saveSnaphshot = false);
     std::list<std::string> filesAddedd() const { return m_filesAdded; }
     std::list<std::string> filesUpdated() const { return m_filesUpdated; }
     std::list<std::string> filesDeleted() const { return m_filesDeleted; }
+    void reset(const std::string& path);
 private:
     std::unordered_map<std::string, FileData> getSnapshot(const std::string &path);
     std::unordered_map<std::string, FileData> m_data;

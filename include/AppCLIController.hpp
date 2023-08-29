@@ -7,6 +7,7 @@ class AppCLIController{
 public:
     AppCLIController(AppModel& model);
     int readMainMenuStep();
+    bool yes();
 private:
     std::string read();
     int asNumber(const std::string& input);

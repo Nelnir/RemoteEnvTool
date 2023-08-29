@@ -1,7 +1,7 @@
 #include "AppCLIView.hpp"
 #include <iostream>
 
-AppCLIView::AppCLIView(const AppModel& model, const int& ar, char** av) : m_model(model), argc(ar), argv(av),
+AppCLIView::AppCLIView(AppModel& model, const int& ar, char** av) : m_model(model), argc(ar), argv(av),
 opt("Allowed options"), m_features(model, *this)
 {
     opt.add_options()
@@ -18,7 +18,7 @@ opt("Allowed options"), m_features(model, *this)
 
 int AppCLIView::show(AppCLIController& controller)
 {
-    std::vector<std::string> simulated_args = {"--help"};
+    std::vector<std::string> simulated_args = {"--interactive"};
     try{
         po::variables_map vm;
         po::parsed_options parsed = po::command_line_parser(simulated_args).options(opt).allow_unregistered().run();
@@ -83,7 +83,7 @@ void AppCLIView::update()
 
 void AppCLIView::drawMenu()
 {
-    writeGreen("Current host: " + m_model.currentHost());
+    writeGreen("Current host: " + m_model.currentHost().first);
 
     for(const auto& feature : m_features.getFeatures()){
         std::cout << '[' << feature.first << "] - " << feature.second.first << std::endl;

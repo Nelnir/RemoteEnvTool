@@ -12,7 +12,7 @@
 namespace po = boost::program_options;
 
 class AppCLIView : public Observer {
-    const AppModel& m_model;
+    AppModel& m_model;
     const int& argc;
     char** argv;
     po::options_description opt;
@@ -22,7 +22,7 @@ class AppCLIView : public Observer {
 #endif
 
 public:
-    AppCLIView(const AppModel& model, const int& argc, char** argv);
+    AppCLIView(AppModel& model, const int& argc, char** argv);
     int show(AppCLIController& controller);
     int interactive(AppCLIController& controller);
     void executeFeature(AppCLIController& controller, const int& option);

@@ -30,12 +30,27 @@ enum class FileChangeType{
 class AppModel : public Subject {
 public:
     AppModel();
-    std::string currentHost() const;
+
+    std::pair<std::string, HostData> currentHost() const { return m_configuration.getCurrentHost(); }
+
+    bool changedFiles() {return m_filesChanged; }
     std::list<std::string> changedFiles(const FileChangeType& type) const;
+    bool transferFile(const std::filesystem::path& file, const std::filesystem::path& remote);
+    bool deleteRemoteFile(const std::string& file);
+    void runPathMonitor(bool updateSnapshot = false);
+    void resetPath(const std::string& path);
+    bool connectToFtp();
+    bool isConnectedToFtp();
+    const Configuration& config() {return m_configuration; }
+    std::filesystem::path getRemoteFileEquivalent(const std::string& file);
+    bool downloadRemoteFile(const std::filesystem::path& remote, std::filesystem::path& to);
+    bool difftool(const std::string& first, const std::string& second);
 private:
-    PathMonitor m_monitor;
     Configuration m_configuration;
+    PathMonitor m_monitor;
     sf::Ftp m_ftp;
+    bool m_filesChanged;
+    std::string m_workingDir;
 };
 
 
