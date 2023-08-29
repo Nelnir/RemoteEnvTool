@@ -26,10 +26,14 @@ public:
     static int LISTS_FILE()                 {return 1;}
     static int TRANSFER_FILES()             {return 2;}
     static int RESET_SNAPSHOT()             {return 3;}
+    static int CHANGE_HOST()                {return 4;}
+    static int HELP()                       {return 5;}
 private:
     void listChangedFiles(AppCLIController& controller);
     void transferFiles(AppCLIController& controller);
     void resetSnapshot(AppCLIController& controller);
+    void changeHost(AppCLIController& controller);
+    void help(AppCLIController& controller);
 };
 
 #endif

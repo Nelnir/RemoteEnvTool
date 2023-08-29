@@ -17,6 +17,11 @@ Configuration::~Configuration()
 
 bool Configuration::setValue(const ConfigKey& key, const std::string& value)
 {
+    if(key == ConfigKey::DefaultHost){
+        if(m_hosts.find(value) == m_hosts.end()){
+            return false;
+        }
+    }
     auto itr = m_configData.find(key);
     bool ret = itr != m_configData.end();
     if(ret) itr->second = value;

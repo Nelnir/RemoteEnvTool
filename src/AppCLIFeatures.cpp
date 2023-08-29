@@ -1,5 +1,6 @@
 #include "AppCLIFeatures.hpp"
 #include "AppCLIView.hpp"
+#include <thread>
 #include <iostream>
 
 AppCLIFeatures::AppCLIFeatures(AppModel& model, AppCLIView& view) : m_model(model), m_view(view)
@@ -8,6 +9,8 @@ AppCLIFeatures::AppCLIFeatures(AppModel& model, AppCLIView& view) : m_model(mode
     registerFeature("List changed files", std::bind(&AppCLIFeatures::listChangedFiles, this, std::placeholders::_1), LISTS_FILE());
     registerFeature("Transfer files", std::bind(&AppCLIFeatures::transferFiles, this, std::placeholders::_1), TRANSFER_FILES());
     registerFeature("Reset file snapshot", std::bind(&AppCLIFeatures::resetSnapshot, this, std::placeholders::_1), RESET_SNAPSHOT());
+    registerFeature("Change host", std::bind(&AppCLIFeatures::changeHost, this, std::placeholders::_1), CHANGE_HOST());
+    registerFeature("Help", std::bind(&AppCLIFeatures::help, this, std::placeholders::_1), HELP());
 }
 
 void AppCLIFeatures::registerFeature(const std::string& name, const FeatureCallback& callback, const int& index){
@@ -50,7 +53,7 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
 {
     m_model.runPathMonitor();
     if(!m_model.changedFiles()){
-        m_view.writeRed("No files changed.");
+        m_view.writeWhite("No files changed.");
         return;
     }
 
@@ -69,7 +72,7 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
         m_view.writeWhite("Upload file (y/n): " + file + "?");
         if(controller.yes()){
             if(m_model.transferFile(file, remote)){
-                m_view.writeGreen("uploaded.");
+                m_view.writeGreen("File uploaded: " + remote.string());
                 m_model.resetPath(file);
             } else{
                 m_view.writeRed("Unable to upload.");
@@ -122,10 +125,39 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
             }
         }
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(750));
+    m_model.notify();
 }
 
 void AppCLIFeatures::resetSnapshot(AppCLIController& controller)
 {
     m_model.runPathMonitor(true);
     m_view.writeWhite("Snapshot resetted.");
+}
+
+void AppCLIFeatures::changeHost(AppCLIController& controller)
+{
+    m_view.writeWhite("Available hosts:");
+    const auto& hosts = m_model.config().getHosts();
+    for(const auto& host : hosts){
+        if(host == m_model.currentHost().first){
+            m_view.writeGreen(host);
+        } else{
+            m_view.writeWhite(host);
+        }
+    }
+    const auto& selectedHost = controller.read();
+    if(m_model.config().setValue(ConfigKey::DefaultHost, selectedHost)){
+        m_view.writeGreen("Host was changed to: " + selectedHost);
+    } else{
+        m_view.writeRed("Unable to choose: " + selectedHost);
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(750));
+    m_model.notify();
+}
+
+void AppCLIFeatures::help(AppCLIController& controller)
+{
+    m_view.writeWhite("The left file will be send to remote FTP, if modified during difftool display.");
+    m_view.writeWhite("In order to add new host, see file config.txt and update accordingly.");
 }

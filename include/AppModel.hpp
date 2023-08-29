@@ -41,7 +41,7 @@ public:
     void resetPath(const std::string& path);
     bool connectToFtp();
     bool isConnectedToFtp();
-    const Configuration& config() {return m_configuration; }
+    Configuration& config() {return m_configuration; }
     std::filesystem::path getRemoteFileEquivalent(const std::string& file);
     bool downloadRemoteFile(const std::filesystem::path& remote, std::filesystem::path& to);
     bool difftool(const std::string& first, const std::string& second);
