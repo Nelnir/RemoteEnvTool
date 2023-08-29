@@ -75,6 +75,11 @@ std::list<std::string> Configuration::getHosts() const
 
 bool Configuration::deleteHost(const std::string& host)
 {
+    // prevent deleting current host
+    if(host == getValue(ConfigKey::DefaultHost)){
+        return false;
+    }
+
     auto itr = m_hosts.find(host);
     if(itr == m_hosts.end())
         return false;
@@ -85,6 +90,13 @@ bool Configuration::deleteHost(const std::string& host)
 bool Configuration::addHost(const std::string& host, const HostData& data)
 {
     return m_hosts.emplace(host, data).second;
+}
+
+std::pair<std::string, HostData> Configuration::getCurrentHost() const
+{
+    const auto& host = getValue(ConfigKey::DefaultHost);
+    auto itr = m_hosts.find(host);
+    return std::make_pair(host, itr->second);
 }
 
 bool Configuration::readFile()

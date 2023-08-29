@@ -102,6 +102,7 @@ public:
     std::list<std::string> getHosts() const;
     bool deleteHost(const std::string& host);
     bool addHost(const std::string& host, const HostData& data = {});
+    std::pair<std::string, HostData> getCurrentHost() const;
 private:
     void setDefaultValues();
     static std::string keyToString(const ConfigKey& key);
