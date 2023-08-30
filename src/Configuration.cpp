@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <boost/algorithm/string/replace.hpp>
 
 Configuration::Configuration(const std::string& path) : m_configFile(path)
 {
@@ -102,6 +103,21 @@ std::pair<std::string, HostData> Configuration::getCurrentHost() const
     const auto& host = getValue(ConfigKey::DefaultHost);
     auto itr = m_hosts.find(host);
     return std::make_pair(host, itr->second);
+}
+
+std::filesystem::path Configuration::getRemoteFileEquivalent(const std::string& file) const
+{
+    std::string remote = "/home/" + getCurrentHost().second.m_username + '/' + getCurrentHost().second.m_remotePath;
+    std::string local = getValue(ConfigKey::LocalPath);
+    std::string fileWithoutPath = file.substr(local.size());
+    boost::replace_all(fileWithoutPath, "\\", "/");
+    if(!fileWithoutPath.empty()){
+        if(fileWithoutPath[0] == '/'){
+            fileWithoutPath = fileWithoutPath.substr(1);
+        }
+    }
+    remote += fileWithoutPath;
+    return remote;
 }
 
 bool Configuration::readFile()

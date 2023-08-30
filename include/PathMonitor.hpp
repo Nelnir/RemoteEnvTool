@@ -16,7 +16,7 @@ public:
     PathMonitor(const std::string& path = "");
     ~PathMonitor();
     bool check(bool saveSnaphshot = true);
-    std::list<std::string> filesAddedd() const { return m_filesAdded; }
+    std::list<std::string> filesAdded() const { return m_filesAdded; }
     std::list<std::string> filesUpdated() const { return m_filesUpdated; }
     std::list<std::string> filesDeleted() const { return m_filesDeleted; }
     void reset(const std::string& path);

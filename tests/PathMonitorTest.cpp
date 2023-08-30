@@ -9,7 +9,7 @@ TEST(PathMonitorTest, Initialization)
     helper.createFile("snapshot.txt");
     {
     PathMonitor monitor("");
-    EXPECT_EQ(0, monitor.filesAddedd().size());
+    EXPECT_EQ(0, monitor.filesAdded().size());
     EXPECT_EQ(0, monitor.filesDeleted().size());
     EXPECT_EQ(0, monitor.filesUpdated().size());
     }
@@ -23,8 +23,8 @@ TEST(PathMonitorTest, CreatingFile)
     PathMonitor monitor("test");
     helper.createFile("test/test.txt");
     EXPECT_TRUE(monitor.check());
-    EXPECT_EQ(monitor.filesAddedd().size(), 1);
-    EXPECT_EQ(monitor.filesAddedd().front(), "test\\test.txt");
+    EXPECT_EQ(monitor.filesAdded().size(), 1);
+    EXPECT_EQ(monitor.filesAdded().front(), "test\\test.txt");
     }
     helper.deleteFile("snapshot.txt");
 }
@@ -76,7 +76,7 @@ TEST(PathMonitorTest, OfflineUpdates)
     PathMonitor monitor("test");
     EXPECT_TRUE(monitor.check());
     EXPECT_EQ(monitor.filesUpdated().size(), 1);
-    EXPECT_EQ(monitor.filesAddedd().size(), 1);
+    EXPECT_EQ(monitor.filesAdded().size(), 1);
     }
 }
 

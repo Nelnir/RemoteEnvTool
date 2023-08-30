@@ -1,44 +1,78 @@
 #include "AppModel.hpp"
 #include <iostream>
-#include <boost/algorithm/string/replace.hpp>
 
 AppModel::AppModel() : m_monitor(m_configuration.getValue(ConfigKey::LocalPath)), m_filesChanged(false)
 {
 
 }
 
-std::list<std::string> AppModel::changedFiles(const FileChangeType& type) const
+std::pair<bool, std::string> AppModel::uploadAddedFile(const std::filesystem::path& file)
 {
-    std::list<std::string> ret;
-    switch(type){
-        case FileChangeType::Added: ret = m_monitor.filesAddedd(); break;
-        case FileChangeType::Removed: ret = m_monitor.filesDeleted(); break;
-        case FileChangeType::Updated: ret = m_monitor.filesUpdated(); break;
+    std::pair<bool, std::string> ret;
+    const auto& remote = config().getRemoteFileEquivalent(file.string());
+    if(m_ftp.changeDirectory(remote.parent_path().string()).isOk()){
+        ret.first = m_ftp.upload(file, "", sf::Ftp::TransferMode::Ascii).isOk();
+        resetPath(file);
     }
+    ret.second = remote.string();
     return ret;
 }
 
-bool AppModel::transferFile(const std::filesystem::path& file, const std::filesystem::path& remote)
+std::pair<bool, std::string> AppModel::updateRemoteFile(const std::filesystem::path& file, const bool& useDifftool)
 {
-    if(m_ftp.changeDirectory(remote.parent_path().string()).isOk()){
-        return m_ftp.upload(file, "", sf::Ftp::TransferMode::Ascii).isOk();
+    const auto& remote = config().getRemoteFileEquivalent(file.string());
+    auto& result = downloadRemoteFile(file);
+    if(!result.first){
+        return std::make_pair(false, remote.string());
     }
-    return false;
+
+    // force file change
+    if(useDifftool){
+        if(!difftool(result.second, file.string())){
+            return std::make_pair(false, remote.string());
+        }
+        auto newPath = std::filesystem::path(result.second).parent_path() / remote.filename();
+        result.second = newPath.string();
+    } else{
+        result.second = file.string();
+    }
+
+    return std::make_pair(transferFile(result.second, remote).first, remote.string());
 }
 
-bool AppModel::deleteRemoteFile(const std::string& file)
+std::pair<bool, std::string> AppModel::deleteRemoteFile(const std::filesystem::path& file)
 {
-    return m_ftp.deleteFile(file).isOk();
+    std::pair<bool, std::string> ret;
+    const auto& remote = config().getRemoteFileEquivalent(file.string());
+    if(m_ftp.changeDirectory(remote.parent_path().string()).isOk()){
+        ret.first = m_ftp.deleteFile(remote).isOk();
+        if(ret.first){
+            resetPath(file);
+        }
+    }
+    ret.second = remote.string();
+    return ret;
 }
 
-void AppModel::runPathMonitor(bool updateSnapshot) 
+std::pair<bool, std::string> AppModel::transferFile(const std::filesystem::path& file, const std::filesystem::path& to)
+{
+    std::pair<bool, std::string> ret;
+    const auto& remote = config().getRemoteFileEquivalent(file.string());
+    if(m_ftp.changeDirectory(to.parent_path().string()).isOk()){
+        ret.first = m_ftp.upload(file, "", sf::Ftp::TransferMode::Ascii).isOk();
+    }
+    ret.second = remote.string();
+    return ret;
+}
+
+void AppModel::runPathMonitor(const bool& updateSnapshot) 
 {
     m_filesChanged = m_monitor.check(updateSnapshot);
 }
 
-void AppModel::resetPath(const std::string& path)
+void AppModel::resetPath(const std::filesystem::path& path)
 {
-    m_monitor.reset(path);
+    m_monitor.reset(path.string());
 }
 
 bool AppModel::connectToFtp()
@@ -62,29 +96,20 @@ bool AppModel::isConnectedToFtp()
     return m_ftp.sendCommand("NOOP").isOk();
 }
 
-std::filesystem::path AppModel::getRemoteFileEquivalent(const std::string& file)
+std::pair<bool, std::string> AppModel::downloadRemoteFile(const std::filesystem::path& file)
 {
-    std::string remote = m_workingDir + m_configuration.getCurrentHost().second.m_remotePath;
-    std::string local = m_configuration.getValue(ConfigKey::LocalPath);
-    std::string fileWithoutPath = file.substr(local.size());
-    boost::replace_all(fileWithoutPath, "\\", "/");
-    if(!fileWithoutPath.empty()){
-        if(fileWithoutPath[0] == '/'){
-            fileWithoutPath = fileWithoutPath.substr(1);
+    std::pair<bool, std::string> ret;
+    const auto& remote = config().getRemoteFileEquivalent(file.string());
+    if(m_ftp.changeDirectory(remote.parent_path().string()).isOk()){
+        if(!std::filesystem::exists("temp/")){
+            std::filesystem::create_directory("temp/");
+        }
+        ret.first = m_ftp.download(remote, "temp/", sf::Ftp::TransferMode::Ascii).isOk();
+        if(ret.first){
+            ret.second = "temp/" + remote.filename().string();
         }
     }
-    remote += fileWithoutPath;
-    return remote;
-}
-
-bool AppModel::downloadRemoteFile(const std::filesystem::path& remote, std::filesystem::path& to)
-{
-    if(m_ftp.download(remote, "", sf::Ftp::TransferMode::Ascii).isOk()){
-        to = "REMOTE." + remote.extension().string();
-        std::filesystem::rename(remote.filename(), to);
-        return true;
-    }
-    return false;
+    return ret;
 }
 
 bool AppModel::difftool(const std::string& first, const std::string& second)

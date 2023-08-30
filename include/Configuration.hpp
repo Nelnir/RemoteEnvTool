@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <unordered_map>
+#include <filesystem>
 
 /**
  * @enum ConfigKey
@@ -103,6 +104,7 @@ public:
     bool deleteHost(const std::string& host);
     bool addHost(const std::string& host, const HostData& data = {});
     std::pair<std::string, HostData> getCurrentHost() const;
+    std::filesystem::path getRemoteFileEquivalent(const std::string& file) const;
 private:
     void setDefaultValues();
     static std::string keyToString(const ConfigKey& key);

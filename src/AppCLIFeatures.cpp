@@ -24,21 +24,22 @@ void AppCLIFeatures::registerFeature(const std::string& name, const FeatureCallb
 void AppCLIFeatures::listChangedFiles(AppCLIController& controller)
 {
     m_model.runPathMonitor();
-    const auto& updated = m_model.changedFiles(FileChangeType::Updated);
+    auto& path = m_model.monitor();
+    const auto& updated = path.filesUpdated();
     if(!updated.empty())
         m_view.writeGreen("UPDATED:");
     for(const auto& file : updated){
         m_view.writeGreen(file);
     }
 
-    const auto& added = m_model.changedFiles(FileChangeType::Added);
+    const auto& added = path.filesAdded();
     if(!added.empty())
         m_view.writeGreen("ADDED:");
     for(const auto& file : added){
         m_view.writeGreen(file);
     }
 
-    const auto& removed = m_model.changedFiles(FileChangeType::Removed);
+    const auto& removed = path.filesDeleted();
     if(!removed.empty())
         m_view.writeRed("DELETED:");
     for(const auto& file : removed){
@@ -67,59 +68,43 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
         }
     }
 
-    for(const auto& file : m_model.changedFiles(FileChangeType::Added)){
-        const auto& remote = m_model.getRemoteFileEquivalent(file);
-        m_view.writeWhite("Upload file (y/n): " + file + "?");
+    for(const auto& file : m_model.monitor().filesAdded()){
+        m_view.writeWhite("Upload file (y/n): " + file);
         if(controller.yes()){
-            if(m_model.transferFile(file, remote)){
-                m_view.writeGreen("File uploaded: " + remote.string());
-                m_model.resetPath(file);
+            const auto& result = m_model.uploadAddedFile(file);
+            if(result.first){
+                m_view.writeGreen("File uploaded: " + result.second);
             } else{
                 m_view.writeRed("Unable to upload.");
             }
         }
     }
 
-    for(const auto& file : m_model.changedFiles(FileChangeType::Updated)){
-        const auto& remote = m_model.getRemoteFileEquivalent(file);
-        std::filesystem::path downloadedFilepath;
-        if(!m_model.downloadRemoteFile(remote, downloadedFilepath)){
-            m_view.writeRed("Unable to download remote file: " + remote.string());
-            continue;
-        }
-        m_view.writeWhite("Use difftool for (y/n): " + remote.string() + "?");
-        bool sendModifiedFile = false;
+    for(const auto& file : m_model.monitor().filesUpdated()){
+        m_view.writeWhite("Update file (y/n): " + file);
         if(controller.yes()){
-            sendModifiedFile = m_model.difftool(downloadedFilepath.string(), file);
-            if(sendModifiedFile){
-                auto newPath = downloadedFilepath.parent_path() / remote.filename();
-                std::filesystem::rename(downloadedFilepath, newPath);
-                downloadedFilepath = newPath;
+            m_view.writeWhite("Use difftool (y/n):");
+            const auto& difftool = controller.yes();
+            if(!difftool){
+                m_view.writeWhite("Then simply overwrite remote with local (y/n)?");
+                if(!controller.yes())
+                    continue;
             }
-        }
-        if(!sendModifiedFile){
-            m_view.writeWhite("Then simply overwrite remote with local (y/n)?");
-            if(!controller.yes()){
-                continue;
+            const auto& result = m_model.updateRemoteFile(file, difftool);
+            if(!result.first){
+                m_view.writeRed("Unable to update file (if difftool was used, left file must be changed): " + result.second);
+            } else{
+                m_view.writeGreen("File updated: " + result.second);
             }
-        }
-        
-        const std::string uploadFile = sendModifiedFile ? downloadedFilepath.string() : file;
-        if(m_model.transferFile(uploadFile, remote)){
-            m_view.writeGreen("File updated: " + remote.string());
-            m_model.resetPath(file);
-        } else{
-            m_view.writeRed("Unable to update file: " + remote.string());
         }
     }
 
-    for(const auto& file : m_model.changedFiles(FileChangeType::Removed)){
-        const auto& remote = m_model.getRemoteFileEquivalent(file);
+    for(const auto& file : m_model.monitor().filesDeleted()){
+        const auto& remote = m_model.config().getRemoteFileEquivalent(file);
         m_view.writeWhite("Delete remote file (y/n): " + remote.string());
         if(controller.yes()){
-            if(m_model.deleteRemoteFile(remote.string())){
+            if(m_model.deleteRemoteFile(file).first){
                 m_view.writeGreen("File removed: " + remote.string());
-                m_model.resetPath(file);
             } else{
                 m_view.writeRed("Couldn't remove file: " + remote.string());
             }
@@ -140,7 +125,7 @@ void AppCLIFeatures::changeHost(AppCLIController& controller)
     m_view.writeWhite("Available hosts:");
     const auto& hosts = m_model.config().getHosts();
     for(const auto& host : hosts){
-        if(host == m_model.currentHost().first){
+        if(host == m_model.config().getCurrentHost().first){
             m_view.writeGreen(host);
         } else{
             m_view.writeWhite(host);

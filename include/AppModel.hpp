@@ -21,31 +21,26 @@ private:
     std::list<Observer*> m_observers;
 };
 
-enum class FileChangeType{
-    Added,
-    Removed,
-    Updated
-};
-
 class AppModel : public Subject {
 public:
     AppModel();
 
-    std::pair<std::string, HostData> currentHost() const { return m_configuration.getCurrentHost(); }
+    std::pair<bool, std::string> uploadAddedFile(const std::filesystem::path& file);
+    std::pair<bool, std::string> updateRemoteFile(const std::filesystem::path& file, const bool& useDifftool);
+    std::pair<bool, std::string> deleteRemoteFile(const std::filesystem::path& file);
 
-    bool changedFiles() {return m_filesChanged; }
-    std::list<std::string> changedFiles(const FileChangeType& type) const;
-    bool transferFile(const std::filesystem::path& file, const std::filesystem::path& remote);
-    bool deleteRemoteFile(const std::string& file);
-    void runPathMonitor(bool updateSnapshot = false);
-    void resetPath(const std::string& path);
+    void runPathMonitor(const bool& updateSnapshot = false);
     bool connectToFtp();
     bool isConnectedToFtp();
+    bool changedFiles() {return m_filesChanged; }
     Configuration& config() {return m_configuration; }
+    PathMonitor& monitor() {return m_monitor; }
     std::filesystem::path getRemoteFileEquivalent(const std::string& file);
-    bool downloadRemoteFile(const std::filesystem::path& remote, std::filesystem::path& to);
+    std::pair<bool, std::string> downloadRemoteFile(const std::filesystem::path& file);
     bool difftool(const std::string& first, const std::string& second);
 private:
+    void resetPath(const std::filesystem::path& path);
+    std::pair<bool, std::string> transferFile(const std::filesystem::path& file, const std::filesystem::path& to);
     Configuration m_configuration;
     PathMonitor m_monitor;
     sf::Ftp m_ftp;

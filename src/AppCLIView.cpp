@@ -27,7 +27,7 @@ int AppCLIView::show(AppCLIController& controller)
 
         po::notify(vm);    
 
-        checkForUnrecognizedOptions(parsed);
+        printUnknownArgs(parsed);
 
         if (vm.count("help")) 
             std::cout << opt << "\n";
@@ -83,14 +83,14 @@ void AppCLIView::update()
 
 void AppCLIView::drawMenu()
 {
-    writeGreen("Current host: " + m_model.currentHost().first);
+    writeGreen("Current host: " + m_model.config().getCurrentHost().first);
 
     for(const auto& feature : m_features.getFeatures()){
         std::cout << '[' << feature.first << "] - " << feature.second.first << std::endl;
     }
 }
 
-void AppCLIView::checkForUnrecognizedOptions(po::parsed_options& parsed)
+void AppCLIView::printUnknownArgs(po::parsed_options& parsed)
 {
     std::vector<std::string> unrecognized = po::collect_unrecognized(parsed.options, po::include_positional);
     
