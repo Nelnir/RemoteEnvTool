@@ -6,9 +6,10 @@ opt("Allowed options"), m_features(model, *this)
 {
     opt.add_options()
     ("help", "produce help message")
-    ("host", po::value<std::string>(), "set host which to connect")
+    ("host", po::value<std::string>(), "set host which to connect (if no value is passed, default will be used)")
     ("interactive", "enable interactive mode")
     ("list-file", "lists files changed")
+    ("transfer", po::value<std::string>(), "send files to remote host\narg values: added, deleted, updated, all")
     ;
 
 #ifdef _WIN32
@@ -18,23 +19,74 @@ opt("Allowed options"), m_features(model, *this)
 
 int AppCLIView::show(AppCLIController& controller)
 {
-    std::vector<std::string> simulated_args = {"--interactive"};
+    std::vector<std::string> simulated_args = {"--transfer", "all"};
     try{
         po::variables_map vm;
-        po::parsed_options parsed = po::command_line_parser(simulated_args).options(opt).allow_unregistered().run();
+        po::parsed_options parsed = po::command_line_parser(simulated_args).options(opt).run();
         po::store(parsed, vm);
         //po::store(po::parse_command_line(argc, argv, opt), vm);
-
         po::notify(vm);    
 
-        printUnknownArgs(parsed);
-
-        if (vm.count("help")) 
+        if (vm.count("help")){
             std::cout << opt << "\n";
+            return 0;
+        }
         if(vm.count("interactive"))
             return interactive(controller);
-        if(vm.count("list-file"))
+        if(vm.count("list-file")){
             executeFeature(controller, AppCLIFeatures::LISTS_FILE());
+            return 0;
+        }
+
+        // if host specified, update default host
+        if(vm.count("host")){
+            const auto& host = vm["host"].as<std::string>();
+            if(!m_model.config().setValue(ConfigKey::DefaultHost, host)){
+                writeRed("Error: unable to change host to " + host);
+                return 1;
+            }
+        }
+
+
+        if(vm.count("transfer")){
+            if(!m_model.connectToFtp()){
+                writeRed("Error: unable to connect via FTP to " + m_model.config().getCurrentHost().first);
+                return 1;
+            }
+            const auto& arg = vm["transfer"].as<std::string>();
+
+            m_model.runPathMonitor();
+
+            if(arg == "updated" || arg == "all"){
+                for(const auto& file : m_model.monitor().filesUpdated()){
+                    const auto& result = m_model.updateRemoteFile(file, true);
+                    if(!result.first){
+                        writeRed("Error: unable to update " + result.second);
+                        return 1;
+                    }
+                }
+            }
+
+            if(arg == "added" || arg == "all"){
+                for(const auto& file : m_model.monitor().filesAdded()){
+                    const auto& result = m_model.uploadAddedFile(file);
+                    if(!result.first){
+                        writeRed("Error: unable to upload " + result.second);
+                        return 1;
+                    }
+                }
+            }
+            if(arg == "deleted" || arg == "all"){
+                for(const auto& file : m_model.monitor().filesDeleted()){
+                    const auto& result = m_model.deleteRemoteFile(file);
+                    if(!result.first){
+                        writeRed("Error: unable to delete: " + result.second);
+                        return 1;
+                    }
+                }
+            }
+            return 0;
+        }
         
 
     } catch (const po::error& e) {
@@ -87,18 +139,6 @@ void AppCLIView::drawMenu()
 
     for(const auto& feature : m_features.getFeatures()){
         std::cout << '[' << feature.first << "] - " << feature.second.first << std::endl;
-    }
-}
-
-void AppCLIView::printUnknownArgs(po::parsed_options& parsed)
-{
-    std::vector<std::string> unrecognized = po::collect_unrecognized(parsed.options, po::include_positional);
-    
-    if (!unrecognized.empty()) {
-        writeRed("Ignored options:");
-        for (const std::string& option : unrecognized) {
-            writeRed(option);
-        }
     }
 }
 

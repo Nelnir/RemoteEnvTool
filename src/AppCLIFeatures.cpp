@@ -68,18 +68,6 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
         }
     }
 
-    for(const auto& file : m_model.monitor().filesAdded()){
-        m_view.writeWhite("Upload file (y/n): " + file);
-        if(controller.yes()){
-            const auto& result = m_model.uploadAddedFile(file);
-            if(result.first){
-                m_view.writeGreen("File uploaded: " + result.second);
-            } else{
-                m_view.writeRed("Unable to upload.");
-            }
-        }
-    }
-
     for(const auto& file : m_model.monitor().filesUpdated()){
         m_view.writeWhite("Update file (y/n): " + file);
         if(controller.yes()){
@@ -92,9 +80,25 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
             }
             const auto& result = m_model.updateRemoteFile(file, difftool);
             if(!result.first){
-                m_view.writeRed("Unable to update file (if difftool was used, left file must be changed): " + result.second);
+                if(difftool){
+                    m_view.writeRed("Unable to update file (left file must be changed): " + result.second);
+                } else{
+                    m_view.writeRed("Unable to update file: " + result.second);
+                }
             } else{
                 m_view.writeGreen("File updated: " + result.second);
+            }
+        }
+    }
+
+    for(const auto& file : m_model.monitor().filesAdded()){
+        m_view.writeWhite("Upload file (y/n): " + file);
+        if(controller.yes()){
+            const auto& result = m_model.uploadAddedFile(file);
+            if(result.first){
+                m_view.writeGreen("File uploaded: " + result.second);
+            } else{
+                m_view.writeRed("Error: unable to upload " + result.second);
             }
         }
     }
@@ -106,7 +110,7 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
             if(m_model.deleteRemoteFile(file).first){
                 m_view.writeGreen("File removed: " + remote.string());
             } else{
-                m_view.writeRed("Couldn't remove file: " + remote.string());
+                m_view.writeRed("Error: unable to delete " + remote.string());
             }
         }
     }

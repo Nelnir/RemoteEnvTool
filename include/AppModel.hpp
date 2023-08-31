@@ -40,7 +40,7 @@ public:
     bool difftool(const std::string& first, const std::string& second);
 private:
     void resetPath(const std::filesystem::path& path);
-    std::pair<bool, std::string> transferFile(const std::filesystem::path& file, const std::filesystem::path& to);
+    bool transferFile(const std::filesystem::path& file, const std::filesystem::path& to);
     Configuration m_configuration;
     PathMonitor m_monitor;
     sf::Ftp m_ftp;

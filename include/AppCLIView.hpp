@@ -34,7 +34,6 @@ public:
     void writeWhite(const std::string& text);
 private:
     void drawMenu();
-    void printUnknownArgs(po::parsed_options& parsed);
 };
 
 #endif
