@@ -6,7 +6,7 @@ opt("Allowed options"), m_features(model, *this)
 {
     opt.add_options()
     ("help", "produce help message")
-    ("host", po::value<std::string>(), "set host which to connect (if no value is passed, default will be used)")
+    ("host", po::value<std::string>(), "set host which to connect (if no --host is passed, default value will be used)")
     ("interactive", "enable interactive mode")
     ("list-file", "lists files changed")
     ("transfer", po::value<std::string>(), "send files to remote host\narg values: added, deleted, updated, all")
@@ -19,15 +19,15 @@ opt("Allowed options"), m_features(model, *this)
 
 int AppCLIView::show(AppCLIController& controller)
 {
-    std::vector<std::string> simulated_args = {"--transfer", "all"};
+    //std::vector<std::string> simulated_args = {"--transfer", "all"};
     try{
         po::variables_map vm;
-        po::parsed_options parsed = po::command_line_parser(simulated_args).options(opt).run();
-        po::store(parsed, vm);
-        //po::store(po::parse_command_line(argc, argv, opt), vm);
+        //po::parsed_options parsed = po::command_line_parser(simulated_args).options(opt).run();
+        //po::store(parsed, vm);
+        po::store(po::parse_command_line(argc, argv, opt), vm);
         po::notify(vm);    
 
-        if (vm.count("help")){
+        if (vm.count("help") || argc == 1){
             std::cout << opt << "\n";
             return 0;
         }
