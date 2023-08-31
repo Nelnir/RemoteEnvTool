@@ -25,16 +25,19 @@ std::pair<bool, std::string> AppModel::updateRemoteFile(const std::filesystem::p
     if(!result.first){
         return std::make_pair(false, remote.string());
     }
-
-    // force file change
+    std::string fileToUpload;
     if(useDifftool){
+        // force file change
         if(!difftool(result.second, file.string())){
+            std::filesystem::remove(result.second);
             return std::make_pair(false, remote.string());
         }
+        fileToUpload = result.second;
     } else{
-        result.second = file.string();
+        fileToUpload = file.string();
     }
-    result.first = transferFile(result.second, remote);
+    result.first = transferFile(fileToUpload, remote);
+    std::filesystem::remove(result.second);
     if(result.first){
         resetPath(file);
     }
