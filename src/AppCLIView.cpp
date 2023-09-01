@@ -22,8 +22,7 @@ int AppCLIView::show(AppCLIController& controller)
     //std::vector<std::string> simulated_args = {"--transfer", "all"};
     try{
         po::variables_map vm;
-        //po::parsed_options parsed = po::command_line_parser(simulated_args).options(opt).run();
-        //po::store(parsed, vm);
+        //po::store(po::command_line_parser(simulated_args).options(opt).run(), vm);
         po::store(po::parse_command_line(argc, argv, opt), vm);
         po::notify(vm);    
 
@@ -61,8 +60,10 @@ int AppCLIView::show(AppCLIController& controller)
                 for(const auto& file : m_model.monitor().filesUpdated()){
                     const auto& result = m_model.updateRemoteFile(file, true);
                     if(!result.first){
-                        writeRed("Error: unable to update " + result.second);
+                        writeRed("Error: unable to update (left file must be changed)" + result.second);
                         return 1;
+                    } else{
+                        writeGreen("Updated: " + result.second);
                     }
                 }
             }
@@ -73,6 +74,8 @@ int AppCLIView::show(AppCLIController& controller)
                     if(!result.first){
                         writeRed("Error: unable to upload " + result.second);
                         return 1;
+                    } else{
+                        writeGreen("Uploaded: " + result.second);
                     }
                 }
             }
@@ -82,6 +85,8 @@ int AppCLIView::show(AppCLIController& controller)
                     if(!result.first){
                         writeRed("Error: unable to delete: " + result.second);
                         return 1;
+                    } else{
+                        writeGreen("Deleted: " + result.second);
                     }
                 }
             }
