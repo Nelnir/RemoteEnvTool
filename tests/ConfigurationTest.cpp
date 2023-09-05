@@ -23,11 +23,11 @@ TEST(ConfigurationTest, ChangingValueAndReadingOnNewObject)
     {
         Configuration conf(file);
         EXPECT_EQ(conf.getValue(ConfigKey::DefaultHost), "devcoo5");
-        EXPECT_TRUE(conf.setValue(ConfigKey::DefaultHost, "new-value"));
+        EXPECT_TRUE(conf.setValue(ConfigKey::LocalPath, "new-value69"));
     }
     {
         Configuration conf(file);
-        EXPECT_EQ(conf.getValue(ConfigKey::DefaultHost), "new-value");
+        EXPECT_EQ(conf.getValue(ConfigKey::LocalPath), "new-value69");
     }
     helper.deleteFile(file);
 }
@@ -73,9 +73,11 @@ TEST(ConfigurationTest, DeletingHost)
     FileTestHelper helper;
     {
         Configuration conf(file);
+        EXPECT_TRUE(conf.addHost("new-host", {}));
         const std::string host = conf.getHosts().front();
-        EXPECT_TRUE(conf.deleteHost(host));
-        EXPECT_EQ(conf.getHosts().size(), 0);
+        EXPECT_FALSE(conf.deleteHost(host));
+        EXPECT_TRUE(conf.deleteHost("new-host"));
+        EXPECT_EQ(conf.getHosts().size(), 1);
     }
     helper.deleteFile(file);
 }

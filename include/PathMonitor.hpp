@@ -13,26 +13,33 @@ struct FileData {
 
 class PathMonitor {
 public:
-    PathMonitor(const std::string& path = "");
+    PathMonitor(const std::filesystem::path& path = "");
     ~PathMonitor();
-    bool check(bool saveSnaphshot = true);
-    std::list<std::string> filesAdded() const { return m_filesAdded; }
-    std::list<std::string> filesUpdated() const { return m_filesUpdated; }
-    std::list<std::string> filesDeleted() const { return m_filesDeleted; }
-    void reset(const std::string& path);
+    bool check(const bool& saveSnaphshot = true);
+    std::list<std::filesystem::path> filesAdded() const { return m_filesAdded; }
+    std::list<std::filesystem::path> filesUpdated() const { return m_filesUpdated; }
+    std::list<std::filesystem::path> filesDeleted() const { return m_filesDeleted; }
+    void reset(const std::filesystem::path& path);
+    void debug()
+    {
+        std::cout << "D\n";
+        for(auto & [x, y] : m_data){
+            std::cout << x << " " << y.last_modified << std::endl;
+        }
+    }
 private:
-    std::unordered_map<std::string, FileData> getSnapshot(const std::string &path);
-    std::unordered_map<std::string, FileData> m_data;
-    const std::string m_path;
+    std::unordered_map<std::filesystem::path, FileData> getSnapshot(const std::filesystem::path &path);
+    std::unordered_map<std::filesystem::path, FileData> m_data;
+    const std::filesystem::path m_path;
 
-    const std::string m_file;
+    const std::filesystem::path m_file;
     bool saveSnapshot();
     bool readSnapshot();
 
     void reset();
-    std::list<std::string> m_filesAdded;
-    std::list<std::string> m_filesUpdated;
-    std::list<std::string> m_filesDeleted;
+    std::list<std::filesystem::path> m_filesAdded;
+    std::list<std::filesystem::path> m_filesUpdated;
+    std::list<std::filesystem::path> m_filesDeleted;
 };
 
 #endif

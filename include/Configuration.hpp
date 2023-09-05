@@ -104,7 +104,7 @@ public:
     bool deleteHost(const std::string& host);
     bool addHost(const std::string& host, const HostData& data = {});
     std::pair<std::string, HostData> getCurrentHost() const;
-    std::filesystem::path getRemoteFileEquivalent(const std::string& file) const;
+    std::filesystem::path getRemoteFileEquivalent(const std::filesystem::path& file) const;
 private:
     void setDefaultValues();
     static std::string keyToString(const ConfigKey& key);

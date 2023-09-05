@@ -105,11 +105,11 @@ std::pair<std::string, HostData> Configuration::getCurrentHost() const
     return std::make_pair(host, itr->second);
 }
 
-std::filesystem::path Configuration::getRemoteFileEquivalent(const std::string& file) const
+std::filesystem::path Configuration::getRemoteFileEquivalent(const std::filesystem::path& file) const
 {
     std::string remote = "/home/" + getCurrentHost().second.m_username + '/' + getCurrentHost().second.m_remotePath;
     std::string local = getValue(ConfigKey::LocalPath);
-    std::string fileWithoutPath = file.substr(local.size());
+    std::string fileWithoutPath = file.string().substr(local.size());
     boost::replace_all(fileWithoutPath, "\\", "/");
     if(!fileWithoutPath.empty()){
         if(fileWithoutPath[0] == '/'){

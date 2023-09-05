@@ -29,21 +29,21 @@ void AppCLIFeatures::listChangedFiles(AppCLIController& controller)
     if(!updated.empty())
         m_view.writeGreen("UPDATED:");
     for(const auto& file : updated){
-        m_view.writeGreen(file);
+        m_view.writeGreen(file.string());
     }
 
     const auto& added = path.filesAdded();
     if(!added.empty())
         m_view.writeGreen("ADDED:");
     for(const auto& file : added){
-        m_view.writeGreen(file);
+        m_view.writeGreen(file.string());
     }
 
     const auto& removed = path.filesDeleted();
     if(!removed.empty())
         m_view.writeRed("DELETED:");
     for(const auto& file : removed){
-        m_view.writeRed(file);
+        m_view.writeRed(file.string());
     }
     if(updated.empty() && added.empty() && removed.empty()){
         m_view.writeWhite("No files changed.");
@@ -69,7 +69,7 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
     }
 
     for(const auto& file : m_model.monitor().filesUpdated()){
-        m_view.writeWhite("Update file (y/n): " + file);
+        m_view.writeWhite("Update file (y/n): " + file.string());
         if(controller.yes()){
             m_view.writeWhite("Use difftool (y/n):");
             const auto& difftool = controller.yes();
@@ -92,7 +92,7 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
     }
 
     for(const auto& file : m_model.monitor().filesAdded()){
-        m_view.writeWhite("Upload file (y/n): " + file);
+        m_view.writeWhite("Upload file (y/n): " + file.string());
         if(controller.yes()){
             const auto& result = m_model.uploadAddedFile(file);
             if(result.first){

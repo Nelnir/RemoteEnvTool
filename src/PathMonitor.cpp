@@ -3,8 +3,9 @@
 #include <sstream>
 #include <iostream>
 #include <thread>
+#include <set>
 
-PathMonitor::PathMonitor(const std::string& path) : m_path(path),
+PathMonitor::PathMonitor(const std::filesystem::path& path) : m_path(path),
 m_file("snapshot.txt")
 {
     // if no snapshot to read,
@@ -21,7 +22,7 @@ PathMonitor::~PathMonitor()
     }
 }
 
-bool PathMonitor::check(bool saveSnapshot)
+bool PathMonitor::check(const bool& saveSnapshot)
 {
     reset();
     auto currentSnapshot = getSnapshot(m_path);
@@ -47,7 +48,7 @@ bool PathMonitor::check(bool saveSnapshot)
     return !m_filesAdded.empty() || !m_filesDeleted.empty() || !m_filesUpdated.empty();
 }
 
-void PathMonitor::reset(const std::string& file)
+void PathMonitor::reset(const std::filesystem::path& file)
 {
     auto itr = m_data.find(file);
     if(itr == m_data.end()){
@@ -59,15 +60,17 @@ void PathMonitor::reset(const std::string& file)
     }
 }
 
-std::unordered_map<std::string, FileData> PathMonitor::getSnapshot(const std::string &path)
+std::unordered_map<std::filesystem::path, FileData> PathMonitor::getSnapshot(const std::filesystem::path &path)
 {
-    std::unordered_map<std::string, FileData> snapshot;
+    std::unordered_map<std::filesystem::path, FileData> snapshot;
     if(!std::filesystem::exists(path))
         return snapshot;
+
+    const std::set<std::string> extensions = {".cpp", ".h", ".hpp"};
         
     for (const auto &entry : fs::recursive_directory_iterator(path)) {
         const auto& path = entry.path().string();
-        if (entry.is_regular_file() && (path.find(".cpp") != -1 ||  path.find(".h") != -1)) {
+        if (entry.is_regular_file() && extensions.count(entry.path().extension().string())) {
             snapshot[path] = {entry.last_write_time().time_since_epoch().count()};
         }
     }
@@ -80,7 +83,7 @@ bool PathMonitor::saveSnapshot()
     std::ofstream file(m_file);
     if(!file) return false;
     for(const auto& pair : m_data){
-        file << pair.first << " " << pair.second.last_modified << '\n';
+        file << pair.first.string() << " " << pair.second.last_modified << '\n';
     }
     file.close();
     return true;
