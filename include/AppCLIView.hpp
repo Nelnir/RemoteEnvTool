@@ -32,6 +32,7 @@ public:
     void writeRed(const std::string& text);
     void writeGreen(const std::string& text);
     void writeWhite(const std::string& text);
+    void writeHelp();
 private:
     void drawMenu();
 };

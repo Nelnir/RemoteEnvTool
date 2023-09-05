@@ -147,6 +147,7 @@ void AppCLIFeatures::changeHost(AppCLIController& controller)
 
 void AppCLIFeatures::help(AppCLIController& controller)
 {
-    m_view.writeWhite("The left file will be send to remote FTP, if modified during difftool display.");
-    m_view.writeWhite("In order to add new host, see file config.txt and update accordingly.");
+    m_view.writeWhite("The left file must be modified in order to update the remote file via FTP.");
+    m_view.writeWhite("To add new host, see file config.txt and update accordingly.");
+    m_view.writeHelp();
 }

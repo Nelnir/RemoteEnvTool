@@ -27,7 +27,7 @@ int AppCLIView::show(AppCLIController& controller)
         po::notify(vm);    
 
         if (vm.count("help") || argc == 1){
-            std::cout << opt << "\n";
+            writeHelp();
             return 0;
         }
         if(vm.count("interactive"))
@@ -96,7 +96,7 @@ int AppCLIView::show(AppCLIController& controller)
 
     } catch (const po::error& e) {
         writeRed("Error: " + std::string(e.what()));
-        std::cout << opt << std::endl;
+        writeHelp();
         return 1;
     }
     return 0;
@@ -172,4 +172,9 @@ void AppCLIView::writeRed(const std::string& text)
 void AppCLIView::writeWhite(const std::string& text)
 {
     std::cout << text << std::endl;
+}
+
+void AppCLIView::writeHelp()
+{
+    std::cout << opt << std::endl;
 }
