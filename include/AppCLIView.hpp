@@ -25,7 +25,6 @@ public:
     AppCLIView(AppModel& model, const int& argc, char** argv);
     int show(AppCLIController& controller);
     int interactive(AppCLIController& controller);
-    void executeFeature(AppCLIController& controller, const int& option);
 
     void update();
 
@@ -35,6 +34,9 @@ public:
     void writeHelp();
 private:
     void drawMenu();
+    void executeInteractiveFeature(AppCLIController& controller, const int& option);
+    int executeTransferFeature(const po::variables_map& vm);
+    int executeScriptFeature(const po::variables_map& vm);
 };
 
 #endif

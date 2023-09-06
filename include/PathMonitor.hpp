@@ -20,13 +20,6 @@ public:
     std::list<std::filesystem::path> filesUpdated() const { return m_filesUpdated; }
     std::list<std::filesystem::path> filesDeleted() const { return m_filesDeleted; }
     void reset(const std::filesystem::path& path);
-    void debug()
-    {
-        std::cout << "D\n";
-        for(auto & [x, y] : m_data){
-            std::cout << x << " " << y.last_modified << std::endl;
-        }
-    }
 private:
     std::unordered_map<std::filesystem::path, FileData> getSnapshot(const std::filesystem::path &path);
     std::unordered_map<std::filesystem::path, FileData> m_data;

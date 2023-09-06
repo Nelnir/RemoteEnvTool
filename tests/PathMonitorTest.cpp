@@ -70,7 +70,6 @@ TEST(PathMonitorTest, OfflineUpdates)
     {
         // creates snapshot and on destruction saves it to file
         PathMonitor monitor(test_folder);
-        monitor.debug();
         EXPECT_FALSE(monitor.check(true));
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -79,7 +78,6 @@ TEST(PathMonitorTest, OfflineUpdates)
     {
     // reads previous snapshot file
     PathMonitor monitor(test_folder);
-    monitor.debug();
     EXPECT_TRUE(monitor.check());
     EXPECT_EQ(monitor.filesUpdated().size(), 1);
     EXPECT_EQ(monitor.filesAdded().size(), 1);
