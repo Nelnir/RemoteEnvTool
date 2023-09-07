@@ -1,7 +1,7 @@
 #include "AppModel.hpp"
 #include <iostream>
 
-AppModel::AppModel() : m_monitor(m_configuration.getValue(ConfigKey::LocalPath)), m_filesChanged(false)
+AppModel::AppModel() : m_monitor(m_configuration.getValue(ConfigKey::LocalPath))
 {
 
 }
@@ -66,9 +66,9 @@ bool AppModel::transferFile(const std::filesystem::path& file, const std::filesy
     return false;
 }
 
-void AppModel::runPathMonitor(const bool& updateSnapshot) 
+bool AppModel::runPathMonitor(const bool& updateSnapshot) 
 {
-    m_filesChanged = m_monitor.check(updateSnapshot);
+    return m_monitor.check(updateSnapshot);
 }
 
 void AppModel::resetPath(const std::filesystem::path& path)

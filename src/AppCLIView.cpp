@@ -24,7 +24,7 @@ int AppCLIView::show(AppCLIController& controller)
     try{
         po::variables_map vm;
         po::store(po::command_line_parser(simulated_args).options(opt).run(), vm);
-        po::store(po::parse_command_line(argc, argv, opt), vm);
+        //po::store(po::parse_command_line(argc, argv, opt), vm);
         po::notify(vm);    
 
         if (vm.count("help") || argc == 1){

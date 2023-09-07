@@ -52,8 +52,7 @@ void AppCLIFeatures::listChangedFiles(AppCLIController& controller)
 
 void AppCLIFeatures::transferFiles(AppCLIController& controller)
 {
-    m_model.runPathMonitor();
-    if(!m_model.changedFiles()){
+    if(!m_model.runPathMonitor()){
         m_view.writeWhite("No files changed.");
         return;
     }

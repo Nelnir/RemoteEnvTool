@@ -29,10 +29,9 @@ public:
     std::pair<bool, std::string> updateRemoteFile(const std::filesystem::path& file, const bool& useDifftool);
     std::pair<bool, std::string> deleteRemoteFile(const std::filesystem::path& file);
 
-    void runPathMonitor(const bool& updateSnapshot = false);
+    bool runPathMonitor(const bool& updateSnapshot = false);
     bool connectToFtp();
     bool isConnectedToFtp();
-    bool changedFiles() {return m_filesChanged; }
     Configuration& config() {return m_configuration; }
     PathMonitor& monitor() {return m_monitor; }
     std::filesystem::path getRemoteFileEquivalent(const std::string& file);
@@ -44,7 +43,6 @@ private:
     Configuration m_configuration;
     PathMonitor m_monitor;
     sf::Ftp m_ftp;
-    bool m_filesChanged;
     std::string m_workingDir;
 };
 
