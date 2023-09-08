@@ -27,7 +27,7 @@ int AppCLIView::show(AppCLIController& controller)
         //po::store(po::parse_command_line(argc, argv, opt), vm);
         po::notify(vm);    
 
-        if (vm.count("help") || argc == 1){
+        if (vm.count("help") /*|| argc == 1*/){
             writeHelp();
             return 0;
         }
@@ -143,6 +143,7 @@ int AppCLIView::executeTransferFeature(const po::variables_map& vm)
 
 int AppCLIView::executeScriptFeature(const po::variables_map& vm)
 {
+    m_model.connectToTelnet();
     return 1;
 }
 

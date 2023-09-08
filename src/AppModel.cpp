@@ -92,6 +92,17 @@ bool AppModel::connectToFtp()
     return response.isOk();
 }
 
+bool AppModel::connectToTelnet()
+{
+    auto data = m_configuration.getCurrentHost();
+    auto ip = sf::IpAddress::resolve(data.first);
+    if(!ip.has_value())
+        return false;
+    if(!m_telnet.connect(ip.value()))
+        return false;
+    return m_telnet.login(data.second.m_username, data.second.m_password);
+}
+
 bool AppModel::isConnectedToFtp()
 {
     return m_ftp.sendCommand("NOOP").isOk();

@@ -25,10 +25,11 @@ set(SOURCES
     src/AppCLIView.cpp
     src/AppCLIController.cpp
     src/AppCLIFeatures.cpp
+    src/TelnetClient.cpp
 )
 
 add_executable(main ${SOURCES})
-target_link_libraries(main PRIVATE sfml-network sfml-main Boost::program_options)
+target_link_libraries(main PRIVATE sfml-network sfml-main Boost::program_options telnetpp)
 
 option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
