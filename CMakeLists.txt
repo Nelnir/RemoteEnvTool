@@ -11,9 +11,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 set(BUILD_SHARED_LIBS FALSE)
 
 add_subdirectory(sfml)
-add_subdirectory(telnet)
 include_directories(sfml/include)
-include_directories(telnet/include)
 include_directories(include)
 
 
@@ -29,7 +27,7 @@ set(SOURCES
 )
 
 add_executable(main ${SOURCES})
-target_link_libraries(main PRIVATE sfml-network sfml-main Boost::program_options telnetpp)
+target_link_libraries(main PRIVATE sfml-network sfml-main Boost::program_options)
 
 option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
