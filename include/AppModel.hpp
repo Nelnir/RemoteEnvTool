@@ -31,8 +31,8 @@ public:
     std::pair<bool, std::string> deleteRemoteFile(const std::filesystem::path& file);
 
     bool runPathMonitor(const bool& updateSnapshot = false);
-    bool connectToFtp();
-    bool connectToTelnet();
+    bool connectToFtp(const HostData& host);
+    bool connectToTelnet(const HostData& host);
     bool isConnectedToFtp();
     Configuration& config() { return m_configuration; }
     PathMonitor& monitor() { return m_monitor; }

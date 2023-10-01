@@ -76,15 +76,14 @@ void AppModel::resetPath(const std::filesystem::path& path)
     m_monitor.reset(path.string());
 }
 
-bool AppModel::connectToFtp()
+bool AppModel::connectToFtp(const HostData& host)
 {
-    auto data = m_configuration.getCurrentHost();
-    auto ip = sf::IpAddress::resolve(data.first);
+    auto ip = sf::IpAddress::resolve(host.m_hostname);
     if(!ip.has_value())
         return false;
     auto response = m_ftp.connect(ip.value());
     if(response.isOk()){
-        response = m_ftp.login(data.second.m_username, data.second.m_password);
+        response = m_ftp.login(host.m_username, host.m_password);
         if(response.isOk()){
             m_workingDir = m_ftp.getWorkingDirectory().getDirectory().string() + "/";
         }
@@ -92,15 +91,14 @@ bool AppModel::connectToFtp()
     return response.isOk();
 }
 
-bool AppModel::connectToTelnet()
+bool AppModel::connectToTelnet(const HostData& host)
 {
-    auto data = m_configuration.getCurrentHost();
-    auto ip = sf::IpAddress::resolve(data.first);
+    auto ip = sf::IpAddress::resolve(host.m_hostname);
     if(!ip.has_value())
         return false;
     if(!m_telnet.connect(ip.value()))
         return false;
-    return m_telnet.login(data.second.m_username, data.second.m_password);
+    return m_telnet.login(host.m_username, host.m_password);
 }
 
 bool AppModel::isConnectedToFtp()

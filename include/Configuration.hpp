@@ -18,7 +18,6 @@ enum class ConfigKey {
     DefaultHost,     ///< Default Host
     LocalPath,       ///< Path to local sources which will be monitored for changes
     Difftool,        ///< Path to difftool used for comparing file differences
-    Port,            ///< Currently supported only telnet (23)
     None
 };
 
@@ -34,6 +33,8 @@ enum class HostConfig {
     RemotePath,     ///< Path to remote sources which will be updated
     Username,       ///< Username to log in to FTP server
     Password,       ///< Password to log in to FTP server
+    Port,           ///< Port which will be used for script execution (telnet or ssh)
+    Script,         ///< Initial script to be executed in order to initialize environment
     None
 };
 
@@ -42,10 +43,15 @@ enum class HostConfig {
  * @brief Holds all information regarding connecting to specific host
  */
 struct HostData{
+    std::string m_hostname;
     std::string m_remotePath;
     std::string m_username;
     std::string m_password;
-    HostData(const std::string& u = "", const std::string& p = "", const std::string& path = "") : m_remotePath(path), m_username(u), m_password(p) {}
+    std::string m_port;
+    std::string m_script;
+    HostData(const std::string& hostname = "", const std::string& remotePath = "", const std::string& username = "",
+             const std::string& password = "", const std::string& port = "", const std::string& script = "") :
+             m_hostname(hostname), m_remotePath(remotePath), m_username(username), m_password(password), m_port(port), m_script(script) {}
 };
 
 /**
@@ -102,8 +108,8 @@ public:
     std::string getHostValue(const std::string& host, const HostConfig& key) const;
     std::list<std::string> getHosts() const;
     bool deleteHost(const std::string& host);
-    bool addHost(const std::string& host, const HostData& data = {});
-    std::pair<std::string, HostData> getCurrentHost() const;
+    bool addHost(const HostData& data);
+    const HostData& getCurrentHost() const;
     std::filesystem::path getRemoteFileEquivalent(const std::filesystem::path& file) const;
 private:
     void setDefaultValues();

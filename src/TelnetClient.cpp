@@ -38,19 +38,20 @@ bool TelnetClient::isConnected() const
 void TelnetClient::close()
 {
     m_keepReading = false;
+    m_blockReading = false;
     if (m_readThread.joinable()) {
         m_readThread.join();
     }
     m_socket.disconnect();
 }
 
-bool TelnetClient::connect(const sf::IpAddress& ip)
+bool TelnetClient::connect(const sf::IpAddress& ip, const uint16_t& port)
 {
     if(m_keepReading){
         return false;
     }
     m_accumulatedData.clear();
-    if(m_socket.connect(ip, 23, sf::milliseconds(250)) != sf::Socket::Status::Done){
+    if(m_socket.connect(ip, port, sf::milliseconds(250)) != sf::Socket::Status::Done){
         return false;
     }
     m_keepReading = true;

@@ -39,6 +39,8 @@ bool Configuration::setHostValue(const std::string& host, const HostConfig& key,
         case HostConfig::Password: itr->second.m_password = value; break;
         case HostConfig::Username: itr->second.m_username = value; break;
         case HostConfig::RemotePath: itr->second.m_remotePath = value; break;
+        case HostConfig::Port: itr->second.m_port = value; break;
+        case HostConfig::Script: itr->second.m_script = value; break;
         case HostConfig::HostName:
             auto copy = itr->second;
             m_hosts.erase(itr);
@@ -65,6 +67,8 @@ std::string Configuration::getHostValue(const std::string& host, const HostConfi
             case HostConfig::Username: return itr->second.m_username;
             case HostConfig::RemotePath: return itr->second.m_remotePath;
             case HostConfig::HostName: return itr->first;
+            case HostConfig::Script: return itr->second.m_script;
+            case HostConfig::Port: return itr->second.m_port;
         }
     }
     return "";
@@ -93,21 +97,21 @@ bool Configuration::deleteHost(const std::string& host)
     return true;
 }
 
-bool Configuration::addHost(const std::string& host, const HostData& data)
+bool Configuration::addHost(const HostData& data)
 {
-    return m_hosts.emplace(host, data).second;
+    return m_hosts.emplace(data.m_hostname, data).second;
 }
 
-std::pair<std::string, HostData> Configuration::getCurrentHost() const
+const HostData& Configuration::getCurrentHost() const
 {
     const auto& host = getValue(ConfigKey::DefaultHost);
     auto itr = m_hosts.find(host);
-    return std::make_pair(host, itr->second);
+    return itr->second;
 }
 
 std::filesystem::path Configuration::getRemoteFileEquivalent(const std::filesystem::path& file) const
 {
-    std::string remote = "/home/" + getCurrentHost().second.m_username + '/' + getCurrentHost().second.m_remotePath;
+    std::string remote = "/home/" + getCurrentHost().m_username + '/' + getCurrentHost().m_remotePath;
     std::string local = getValue(ConfigKey::LocalPath);
     std::string fileWithoutPath = file.string().substr(local.size());
     boost::replace_all(fileWithoutPath, "\\", "/");
@@ -150,7 +154,7 @@ bool Configuration::readFile()
                 if(key == HostConfig::HostName){
                     current_host_itr = m_hosts.find(value);
                     if(current_host_itr == m_hosts.end()){
-                        current_host_itr = m_hosts.insert({value, {}}).first;
+                        current_host_itr = m_hosts.insert({value, {value}}).first;
                     }
                 } else if(current_host_itr == m_hosts.end()){
                     std::cerr << "[HOST] field must come before any other host field!" << std::endl;
@@ -159,6 +163,8 @@ bool Configuration::readFile()
                         case HostConfig::Password: current_host_itr->second.m_password = value; break;
                         case HostConfig::RemotePath: current_host_itr->second.m_remotePath = value; break;
                         case HostConfig::Username: current_host_itr->second.m_username = value; break;
+                        case HostConfig::Script: current_host_itr->second.m_script = value; break;
+                        case HostConfig::Port: current_host_itr->second.m_port = value; break;
                     }
                 }
             } else{ // its garbage
@@ -182,7 +188,9 @@ bool Configuration::saveFile() const
         file << keyToString(HostConfig::HostName) << " " << pair.first << '\n'
              << keyToString(HostConfig::Username) << " " << pair.second.m_username << '\n'
              << keyToString(HostConfig::Password) << " " << pair.second.m_password << '\n'
-             << keyToString(HostConfig::RemotePath) << " " << pair.second.m_remotePath << "\n\n";
+             << keyToString(HostConfig::RemotePath) << " " << pair.second.m_remotePath << '\n'
+             << keyToString(HostConfig::Script) << " " << pair.second.m_script << '\n'
+             << keyToString(HostConfig::Port) << " " << pair.second.m_port << "\n\n";
     file.close();
     return true;
 }
@@ -190,7 +198,6 @@ bool Configuration::saveFile() const
 void Configuration::setDefaultValues()
 {
     m_configData.insert({ConfigKey::DefaultHost, "devcoo5"});
-    m_configData.insert({ConfigKey::Port, "23"});
     m_configData.insert({ConfigKey::LocalPath, "C:\\example\\path"});
     m_configData.insert({ConfigKey::Difftool, "C:\\example\\path\\difftool.exe"});
 
@@ -198,6 +205,8 @@ void Configuration::setDefaultValues()
     example.m_username = "username";
     example.m_password = "password";
     example.m_remotePath = "appksi\\zrodla_zer\\...";
+    example.m_script = "E2_PROD2.sh";
+    example.m_port = "23";
     m_hosts.insert({"devcoo5", example});
 }
 
@@ -205,7 +214,6 @@ std::string Configuration::keyToString(const ConfigKey& key)
 {
     static const std::map<ConfigKey, std::string> map = {
     {ConfigKey::DefaultHost, "DEFAULT_HOST:"},
-    {ConfigKey::Port, "PORT:"},
     {ConfigKey::LocalPath, "LOCAL_PATH:"},
     {ConfigKey::Difftool, "DIFFTOOL:"}};
     auto itr = map.find(key);
@@ -216,7 +224,6 @@ ConfigKey Configuration::stringToKey(const std::string& key)
 {
     static const std::map<std::string, ConfigKey> map = {
     {"DEFAULT_HOST:", ConfigKey::DefaultHost},
-    {"PORT:", ConfigKey::Port},
     {"LOCAL_PATH:", ConfigKey::LocalPath},
     {"DIFFTOOL:", ConfigKey::Difftool}};
     auto itr = map.find(key);
@@ -231,7 +238,9 @@ std::string Configuration::keyToString(const HostConfig& key)
     {HostConfig::HostName, "HOST:"},
     {HostConfig::Password, "PASSWORD:"},
     {HostConfig::Username, "USERNAME:"},
-    {HostConfig::RemotePath, "REMOTE_PATH:"}};
+    {HostConfig::RemotePath, "REMOTE_PATH:"},
+    {HostConfig::Port, "PORT:"},
+    {HostConfig::Script, "SCRIPT:"}};
     auto itr = map.find(key);
     return itr->second;
 }
@@ -242,7 +251,9 @@ HostConfig Configuration::stringToHostKey(const std::string& key)
     {"HOST:", HostConfig::HostName},
     {"PASSWORD:", HostConfig::Password},
     {"USERNAME:", HostConfig::Username},
-    {"REMOTE_PATH:", HostConfig::RemotePath}};
+    {"REMOTE_PATH:", HostConfig::RemotePath},
+    {"PORT:", HostConfig::Port},
+    {"SCRIPT:", HostConfig::Script}};
     auto itr = map.find(key);
     if(itr != map.end())
         return itr->second;

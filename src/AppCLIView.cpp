@@ -95,8 +95,8 @@ void AppCLIView::executeInteractiveFeature(AppCLIController& controller, const i
 
 int AppCLIView::executeTransferFeature(const po::variables_map& vm)
 {
-    if(!m_model.connectToFtp()){
-        writeRed("Error: unable to connect via FTP to " + m_model.config().getCurrentHost().first);
+    if(!m_model.connectToFtp(m_model.config().getCurrentHost())){
+        writeRed("Error: unable to connect via FTP to " + m_model.config().getCurrentHost().m_hostname);
         return 1;
     }
     const auto& arg = vm["transfer"].as<std::string>();
@@ -143,12 +143,15 @@ int AppCLIView::executeTransferFeature(const po::variables_map& vm)
 
 int AppCLIView::executeScriptFeature(const po::variables_map& vm)
 {
-    if(!m_model.connectToTelnet()){
-        writeRed("Error: unable to connect via telnet to " + m_model.config().getCurrentHost().first);
+    auto host = m_model.config().getCurrentHost();
+    if(!m_model.connectToTelnet(host)){
+        writeRed("Error: unable to connect via telnet to " + host.m_hostname);
         return 1;
+    } else{
+        writeGreen("Connected via telnet to: " + host.m_hostname);
     }
 
-    auto promise = m_model.telnet().executeCommand(". E2_PROD2.sh");
+    auto promise = m_model.telnet().executeCommand(". " + host.m_script);
 
     if(promise.wait_for(std::chrono::seconds(5)) == std::future_status::ready)
         std::cout << promise.get() << std::endl;
@@ -167,7 +170,7 @@ void AppCLIView::update()
 
 void AppCLIView::drawMenu()
 {
-    writeGreen("Current host: " + m_model.config().getCurrentHost().first);
+    writeGreen("Current host: " + m_model.config().getCurrentHost().m_hostname);
 
     for(const auto& feature : m_features.getFeatures()){
         std::cout << '[' << feature.first << "] - " << feature.second.first << std::endl;

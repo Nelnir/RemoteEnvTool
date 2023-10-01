@@ -59,7 +59,7 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
 
     if(!m_model.isConnectedToFtp()){
         m_view.writeWhite("Connecting to ftp server...");
-        if(m_model.connectToFtp()){
+        if(m_model.connectToFtp(m_model.config().getCurrentHost())){
             m_view.writeGreen("Success");
         } else{
             m_view.writeRed("Error when connecting to ftp.");
@@ -128,7 +128,7 @@ void AppCLIFeatures::changeHost(AppCLIController& controller)
     m_view.writeWhite("Available hosts:");
     const auto& hosts = m_model.config().getHosts();
     for(const auto& host : hosts){
-        if(host == m_model.config().getCurrentHost().first){
+        if(host == m_model.config().getCurrentHost().m_hostname){
             m_view.writeGreen(host);
         } else{
             m_view.writeWhite(host);
