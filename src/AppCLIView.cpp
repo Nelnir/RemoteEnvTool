@@ -143,8 +143,18 @@ int AppCLIView::executeTransferFeature(const po::variables_map& vm)
 
 int AppCLIView::executeScriptFeature(const po::variables_map& vm)
 {
-    m_model.connectToTelnet();
-    return 1;
+    if(!m_model.connectToTelnet()){
+        writeRed("Error: unable to connect via telnet to " + m_model.config().getCurrentHost().first);
+        return 1;
+    }
+
+    auto promise = m_model.telnet().executeCommand(". E2_PROD2.sh");
+
+    if(promise.wait_for(std::chrono::seconds(5)) == std::future_status::ready)
+        std::cout << promise.get() << std::endl;
+    
+    const auto& arg = vm["script"].as<std::string>();
+    return 0;
 }
 
 void AppCLIView::update()

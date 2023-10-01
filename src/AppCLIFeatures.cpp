@@ -113,7 +113,7 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
             }
         }
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(750));
+    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     m_model.notify();
 }
 

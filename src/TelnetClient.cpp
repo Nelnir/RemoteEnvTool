@@ -2,6 +2,14 @@
 #include <sstream>
 #include <iostream>
 
+class BlockReadingGuard {
+public:
+    BlockReadingGuard(std::atomic<bool>& blockReadingFlag) : m_blockReadingFlag(blockReadingFlag) {m_blockReadingFlag = true;}
+    ~BlockReadingGuard() {m_blockReadingFlag = false;}
+private:
+    std::atomic<bool>& m_blockReadingFlag;
+};
+
 TelnetClient::TelnetClient()
 {
 
@@ -22,10 +30,9 @@ bool TelnetClient::write(const std::string& text)
     return m_socket.send(text.c_str(), text.size()) == sf::Socket::Status::Done;
 }
 
-bool TelnetClient::is_alive()
+bool TelnetClient::isConnected() const
 {
-    std::size_t received;
-    return m_socket.receive(m_buffer, sizeof(m_buffer), received) != sf::Socket::Status::Disconnected;
+    return m_keepReading;
 }
 
 void TelnetClient::close()
@@ -39,6 +46,9 @@ void TelnetClient::close()
 
 bool TelnetClient::connect(const sf::IpAddress& ip)
 {
+    if(m_keepReading){
+        return false;
+    }
     m_accumulatedData.clear();
     if(m_socket.connect(ip, 23, sf::milliseconds(250)) != sf::Socket::Status::Done){
         return false;
@@ -63,6 +73,7 @@ bool TelnetClient::login(const std::string& username, const std::string& passwor
     });
 
     if(authFuture.wait_for(std::chrono::seconds(3)) == std::future_status::ready) {
+        std::this_thread::sleep_for(std::chrono::seconds(5));
         return authFuture.get();
     }
     return false;
@@ -70,24 +81,22 @@ bool TelnetClient::login(const std::string& username, const std::string& passwor
 
 std::future<std::string> TelnetClient::executeCommand(const std::string& command)
 {
-    auto promise = std::make_shared<std::promise<std::string>>();
-    std::thread([this, command, promise]() {
+    return std::async(std::launch::async, [this, command]() {
+        BlockReadingGuard guard(m_blockReading);
         std::string fullCommand = command + "\n";
-        if (m_socket.send(fullCommand.c_str(), fullCommand.size()) != sf::Socket::Status::Done) {
-            promise->set_exception(std::make_exception_ptr(std::runtime_error("Send failed")));
-            return;
+        if (m_socket.send(fullCommand.c_str(), fullCommand.size()) == sf::Socket::Status::Done) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(COMMAND_COLLECTION_DATA_TIME));
+            std::size_t received;
+            if (m_socket.receive(m_buffer, sizeof(m_buffer), received) == sf::Socket::Status::Done) {
+                std::string data(reinterpret_cast<char*>(m_buffer), received);
+                return data;
+            } else {
+                throw std::runtime_error("Receive failed");
+            }
+        } else {
+            throw std::runtime_error("Send failed");
         }
-
-        std::size_t received;
-        if (m_socket.receive(m_buffer, sizeof(m_buffer), received) != sf::Socket::Status::Done) {
-            promise->set_exception(std::make_exception_ptr(std::runtime_error("Receive failed")));
-            return;
-        }
-
-        promise->set_value(std::string((char)m_buffer, received));
-    }).detach();
-
-    return promise->get_future();
+    });
 }
 
 void TelnetClient::handleReadThread()
@@ -97,7 +106,7 @@ void TelnetClient::handleReadThread()
 
     while (m_keepReading) {
         if (selector.wait(sf::seconds(1))) {
-            if (selector.isReady(m_socket)) {
+            if (selector.isReady(m_socket) && !m_blockReading) {
                 std::size_t received;
                 if (m_socket.receive(m_buffer, sizeof(m_buffer), received) == sf::Socket::Status::Done) {
                     std::stringstream textStream;
@@ -121,7 +130,7 @@ void TelnetClient::handleReadThread()
 
                     std::string filteredStr = textStream.str();
                     if (!filteredStr.empty()) {
-                        std::cout << "RECEIVED TEXT: " << filteredStr << std::endl;
+                        //std::cout << filteredStr << std::endl;
                     }
 
                     m_accumulatedData += filteredStr;
