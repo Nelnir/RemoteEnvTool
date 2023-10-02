@@ -2,119 +2,56 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#include <thread>
-#include <set>
+#include <cstdlib>
+#include <cstdio>
 
-PathMonitor::PathMonitor(const std::filesystem::path& path) : m_path(path),
-m_file("snapshot.txt")
+bool GitMonitoringStrategy::check(const std::filesystem::path& path) 
 {
-    // if no snapshot to read,
-    if(!readSnapshot()){
-        m_data = getSnapshot(path); // get current snapshot
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(3));
-}
+    m_added.clear();
+    m_removed.clear();
+    m_updated.clear();
 
-PathMonitor::~PathMonitor()
-{
-    if(!saveSnapshot()){
-        std::cerr << "Unable to save file snapshot." << std::endl;
-    }
-}
-
-bool PathMonitor::check(const bool& saveSnapshot)
-{
-    reset();
-    auto currentSnapshot = getSnapshot(m_path);
-
-    // Check for deletions and changes
-    for (const auto &[file, fileData] : m_data) {
-        if (currentSnapshot.find(file) == currentSnapshot.end()) {
-            m_filesDeleted.emplace_back(file);
-        } else if (fileData.last_modified != currentSnapshot[file].last_modified) {
-            m_filesUpdated.emplace_back(file);
-        }
+    // Redirect the output of the git command to a temporary file
+    std::string tmpFile = "temp_output.txt";
+    std::string cmd = "git -C " + path.string() + " status --porcelain > " + tmpFile;
+    
+    if (system(cmd.c_str()) != 0) {
+        std::cerr << "Failed to execute git command." << std::endl;
+        return false;
     }
 
-    // Check for additions
-    for (const auto &[file, fileData] : currentSnapshot) {
-        if (m_data.find(file) == m_data.end()) {
-            m_filesAdded.emplace_back(file);
-        }
+    std::ifstream file(tmpFile);
+    if (!file.is_open()) {
+        std::cerr << "Failed to open temporary file." << std::endl;
+        return false;
     }
 
-    if(saveSnapshot)
-        m_data = currentSnapshot;
-    return !m_filesAdded.empty() || !m_filesDeleted.empty() || !m_filesUpdated.empty();
-}
+    std::string line, status;
+    std::filesystem::path filePath;
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        ss >> status >> filePath;
 
-void PathMonitor::reset(const std::filesystem::path& file)
-{
-    auto itr = m_data.find(file);
-    if(itr == m_data.end()){
-        //m_data[file] = {std::filesystem::last_write_time(file).time_since_epoch().count()};
-    } else if(std::filesystem::exists(file)){
-        itr->second.last_modified = std::filesystem::last_write_time(file).time_since_epoch().count();
-    } else{ // file was deleted
-        m_data.erase(itr);
+        if (status == "A")
+            m_added.push_back(filePath);
+        else if (status == "D")
+            m_removed.push_back(filePath);
+        else if (status == "M")
+            m_updated.push_back(filePath);
     }
-}
 
-std::unordered_map<std::filesystem::path, FileData> PathMonitor::getSnapshot(const std::filesystem::path &path)
-{
-    std::unordered_map<std::filesystem::path, FileData> snapshot;
-    if(!std::filesystem::exists(path))
-        return snapshot;
-
-    const std::set<std::string> extensions = {".cpp", ".h", ".hpp"};
-        
-    for (const auto &entry : fs::recursive_directory_iterator(path)) {
-        const auto& path = entry.path().string();
-        if (entry.is_regular_file() && extensions.count(entry.path().extension().string())) {
-            snapshot[path] = {entry.last_write_time().time_since_epoch().count()};
-        }
-    }
-    return snapshot;
-}
-
-bool PathMonitor::saveSnapshot()
-{
-    if(m_data.empty()) return true;
-    std::ofstream file(m_file);
-    if(!file) return false;
-    for(const auto& pair : m_data){
-        file << pair.first.string() << " " << pair.second.last_modified << '\n';
-    }
     file.close();
+    std::remove(tmpFile.c_str());  // Delete the temporary file
+
+    if (m_added.empty() && m_removed.empty() && m_updated.empty()) 
+        return false;
     return true;
 }
 
-bool PathMonitor::readSnapshot()
-{
-    std::ifstream file(m_file);
-    if(!file) return false;
-    std::string line;
-    while(std::getline(file, line)){
-        std::istringstream iss(line);
-        std::string key;
-        int64_t nano;
-        if(!(iss >> key >> nano)){
-            std::cerr << "Malformed line in config: " << line << std::endl;
-            continue;
-        }
-        auto itr = m_data.find(key);
-        if(itr == m_data.end()){
-            FileData data;
-            data.last_modified = nano;
-            m_data.insert(std::make_pair(key, data));
-        }
-    }
-    return true;
-}
 
-void PathMonitor::reset()
+PathMonitor::PathMonitor(const std::filesystem::path& path, std::unique_ptr<MonitoringStrategy> strategy) :
+m_path(path),
+m_strategy(std::move(strategy))
 {
-    m_filesAdded.clear();
-    m_filesDeleted.clear();
-    m_filesUpdated.clear();
+
 }

@@ -17,7 +17,6 @@ std::pair<bool, std::string> AppModel::uploadAddedFile(const std::filesystem::pa
         } else if(!suppressOutput){
             notifyBad("Error: when uploading file " + file.string());
         }
-        resetPath(file);
     }
     ret.second = remote.string();
     return ret;
@@ -44,7 +43,6 @@ std::pair<bool, std::string> AppModel::updateRemoteFile(const std::filesystem::p
     result.first = transferFile(fileToUpload, remote, true);
     std::filesystem::remove(result.second);
     if(result.first){
-        resetPath(file);
         if(!suppressOutput){
             notifyGood("Success: file updated " + result.first);
         }
@@ -61,7 +59,6 @@ std::pair<bool, std::string> AppModel::deleteRemoteFile(const std::filesystem::p
     if(m_ftp.changeDirectory(remote.parent_path().string()).isOk()){
         ret.first = m_ftp.deleteFile(remote).isOk();
         if(ret.first){
-            resetPath(file);
             if(!suppressOutput){
                 notifyGood("Success: deleted file " + remote.string());
             }
@@ -86,11 +83,6 @@ bool AppModel::transferFile(const std::filesystem::path& file, const std::filesy
         }
     }
     return false;
-}
-
-void AppModel::resetPath(const std::filesystem::path& path)
-{
-    m_monitor.reset(path.string());
 }
 
 bool AppModel::connectToFtp(const HostData& host)
@@ -175,7 +167,7 @@ bool AppModel::difftool(const std::string& first, const std::string& second)
 
 bool AppModel::listChangedFiles()
 {
-    m_monitor.check(false);
+    m_monitor.check();
     const auto& updated = m_monitor.filesUpdated();
     if(!updated.empty())
         notifyGood("UPDATED:");
@@ -190,7 +182,7 @@ bool AppModel::listChangedFiles()
         notifyGood(file.string());
     }
 
-    const auto& removed = m_monitor.filesDeleted();
+    const auto& removed = m_monitor.filesRemoved();
     if(!removed.empty())
         notifyBad("DELETED:");
     for(const auto& file : removed){
@@ -284,7 +276,7 @@ bool AppModel::transfer(const std::string& arg)
         }
     }
 
-    m_monitor.check(false);
+    m_monitor.check();
 
     if(arg == "updated" || arg == "all"){
         for(const auto& file : m_monitor.filesUpdated()){
@@ -304,7 +296,7 @@ bool AppModel::transfer(const std::string& arg)
         }
     }
     if(arg == "deleted" || arg == "all"){
-        for(const auto& file : m_monitor.filesDeleted()){
+        for(const auto& file : m_monitor.filesRemoved()){
             const auto& result = deleteRemoteFile(file);
             if(!result.first){
                 return false;

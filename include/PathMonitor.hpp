@@ -5,34 +5,42 @@
 #include <filesystem>
 #include <unordered_map>
 
-namespace fs = std::filesystem;
+class MonitoringStrategy{
+public:
+    virtual ~MonitoringStrategy() {}
+    virtual std::vector<std::filesystem::path> getAddedFiles() const {return m_added;}
+    virtual std::vector<std::filesystem::path> getRemovedFiles() const {return m_removed;}
+    virtual std::vector<std::filesystem::path> getUpdatedFiles() const {return m_updated;}
+    virtual bool check(const std::filesystem::path& path) = 0;
+protected:
+    std::vector<std::filesystem::path> m_added;
+    std::vector<std::filesystem::path> m_removed;
+    std::vector<std::filesystem::path> m_updated;
+};
 
-struct FileData {
-    int64_t last_modified;
+class GitMonitoringStrategy : public MonitoringStrategy{
+public:
+    bool check(const std::filesystem::path& path);
 };
 
 class PathMonitor {
 public:
-    PathMonitor(const std::filesystem::path& path = "");
-    ~PathMonitor();
-    bool check(const bool& saveSnaphshot = true);
-    std::list<std::filesystem::path> filesAdded() const { return m_filesAdded; }
-    std::list<std::filesystem::path> filesUpdated() const { return m_filesUpdated; }
-    std::list<std::filesystem::path> filesDeleted() const { return m_filesDeleted; }
-    void reset(const std::filesystem::path& path);
+    PathMonitor(const std::filesystem::path& path = "", std::unique_ptr<MonitoringStrategy> strategy = std::make_unique<GitMonitoringStrategy>());
+    std::vector<std::filesystem::path> filesAdded() const{
+        return m_strategy->getAddedFiles();
+    }
+    std::vector<std::filesystem::path> filesRemoved() const {
+        return m_strategy->getRemovedFiles();
+    }
+    std::vector<std::filesystem::path> filesUpdated() const {
+        return m_strategy->getUpdatedFiles();
+    }
+    bool check(){
+        return m_strategy->check(m_path);
+    }
 private:
-    std::unordered_map<std::filesystem::path, FileData> getSnapshot(const std::filesystem::path &path);
-    std::unordered_map<std::filesystem::path, FileData> m_data;
     const std::filesystem::path m_path;
-
-    const std::filesystem::path m_file;
-    bool saveSnapshot();
-    bool readSnapshot();
-
-    void reset();
-    std::list<std::filesystem::path> m_filesAdded;
-    std::list<std::filesystem::path> m_filesUpdated;
-    std::list<std::filesystem::path> m_filesDeleted;
+    std::unique_ptr<MonitoringStrategy> m_strategy;
 };
 
 #endif

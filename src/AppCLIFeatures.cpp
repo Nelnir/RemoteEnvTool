@@ -33,7 +33,7 @@ void AppCLIFeatures::listChangedFiles(AppCLIController& controller)
 
 void AppCLIFeatures::transferFiles(AppCLIController& controller)
 {
-    if(!m_model.m_monitor.check(false)){
+    if(!m_model.m_monitor.check()){
         m_view.writeWhite("No files changed.");
         return;
     }
@@ -83,7 +83,7 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
         }
     }
 
-    for(const auto& file : m_model.monitor().filesDeleted()){
+    for(const auto& file : m_model.monitor().filesRemoved()){
         const auto& remote = m_model.config().getRemoteFileEquivalent(file);
         m_view.writeWhite("Delete remote file (y/n): " + remote.string());
         if(controller.yes()){

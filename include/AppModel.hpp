@@ -55,7 +55,6 @@ private:
     std::pair<bool, std::string> deleteRemoteFile(const std::filesystem::path& file, const bool& suppressOutput = false);
     std::pair<bool, std::string> downloadRemoteFile(const std::filesystem::path& file, const bool& suppressOutput = false);
 
-    void resetPath(const std::filesystem::path& path);
     bool difftool(const std::string& first, const std::string& second);
 
     Configuration m_configuration;
