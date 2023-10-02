@@ -26,7 +26,10 @@ public:
     int show(AppCLIController& controller);
     int interactive(AppCLIController& controller);
 
-    void update();
+    void update(const std::string& str);
+    void updateGood(const std::string& str);
+    void updateBad(const std::string& str);
+    void restart();
 
     void writeRed(const std::string& text);
     void writeGreen(const std::string& text);
@@ -35,13 +38,6 @@ public:
 private:
     void drawMenu();
     void executeInteractiveFeature(AppCLIController& controller, const int& option);
-    int executeTransferFeature(const po::variables_map& vm);
-    int executeScriptFeature(const po::variables_map& vm);
-    int executeRestartFeature(const po::variables_map& vm);
-    int executeTlogFeature(const po::variables_map& vm);
-
-    bool connectToTelnet(const HostData& host);
-    bool connectToFTP(const HostData& host);
 };
 
 #endif

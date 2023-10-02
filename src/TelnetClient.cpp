@@ -118,8 +118,8 @@ std::future<std::string> TelnetClient::executeCommand(const std::string& command
                 startTime = std::chrono::steady_clock::now();
             } else if(status == sf::Socket::Status::NotReady){
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                // if 10 seconds have elapsed since last data receive time, then exit
-                if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count() >= 10000) {
+                // if 15 seconds have elapsed since last data receive time, then exit
+                if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count() >= 15000) {
                     data += "\nwarning: 10 seconds have elapsed since last data receive time\n";
                     break;
                 }   
@@ -127,6 +127,7 @@ std::future<std::string> TelnetClient::executeCommand(const std::string& command
                 throw std::runtime_error("Receive failed");
             }
         }
+        std::cout << std::endl;
         m_socket.setBlocking(true);
         return data;
     });

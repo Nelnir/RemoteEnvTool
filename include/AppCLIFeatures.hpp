@@ -29,7 +29,8 @@ public:
     static int CHANGE_HOST()                {return 4;}
     static int RESTART()                    {return 5;}
     static int TLOG()                       {return 6;}
-    static int HELP()                       {return 7;}
+    static int SCRIPT()                     {return 7;}
+    static int HELP()                       {return 8;}
 private:
     void listChangedFiles(AppCLIController& controller);
     void transferFiles(AppCLIController& controller);
@@ -38,6 +39,8 @@ private:
     void help(AppCLIController& controller);
     void restart(AppCLIController& controller);
     void tlog(AppCLIController& controller);
+    void script(AppCLIController& controller);
+    void pressEnter(AppCLIController& controller);
 };
 
 #endif

@@ -13,6 +13,7 @@ AppCLIFeatures::AppCLIFeatures(AppModel& model, AppCLIView& view) : m_model(mode
     registerFeature("Change host", std::bind(&AppCLIFeatures::changeHost, this, std::placeholders::_1), CHANGE_HOST());
     registerFeature("Restart", std::bind(&AppCLIFeatures::restart, this, std::placeholders::_1), RESTART());
     registerFeature("Tlog", std::bind(&AppCLIFeatures::tlog, this, std::placeholders::_1), TLOG());
+    registerFeature("Script", std::bind(&AppCLIFeatures::script, this, std::placeholders::_1), SCRIPT());
     registerFeature("Help", std::bind(&AppCLIFeatures::help, this, std::placeholders::_1), HELP());
 }
 
@@ -26,36 +27,13 @@ void AppCLIFeatures::registerFeature(const std::string& name, const FeatureCallb
 
 void AppCLIFeatures::listChangedFiles(AppCLIController& controller)
 {
-    m_model.runPathMonitor();
-    auto& path = m_model.monitor();
-    const auto& updated = path.filesUpdated();
-    if(!updated.empty())
-        m_view.writeGreen("UPDATED:");
-    for(const auto& file : updated){
-        m_view.writeGreen(file.string());
-    }
-
-    const auto& added = path.filesAdded();
-    if(!added.empty())
-        m_view.writeGreen("ADDED:");
-    for(const auto& file : added){
-        m_view.writeGreen(file.string());
-    }
-
-    const auto& removed = path.filesDeleted();
-    if(!removed.empty())
-        m_view.writeRed("DELETED:");
-    for(const auto& file : removed){
-        m_view.writeRed(file.string());
-    }
-    if(updated.empty() && added.empty() && removed.empty()){
-        m_view.writeWhite("No files changed.");
-    }
+    m_model.listChangedFiles();
+    pressEnter(controller);
 }
 
 void AppCLIFeatures::transferFiles(AppCLIController& controller)
 {
-    if(!m_model.runPathMonitor()){
+    if(!m_model.m_monitor.check(false)){
         m_view.writeWhite("No files changed.");
         return;
     }
@@ -116,14 +94,14 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
             }
         }
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    m_model.notify();
+    pressEnter(controller);
 }
 
 void AppCLIFeatures::resetSnapshot(AppCLIController& controller)
 {
-    m_model.runPathMonitor(true);
+    m_model.m_monitor.check();
     m_view.writeWhite("Snapshot resetted.");
+    pressEnter(controller);
 }
 
 void AppCLIFeatures::changeHost(AppCLIController& controller)
@@ -143,19 +121,43 @@ void AppCLIFeatures::changeHost(AppCLIController& controller)
     } else{
         m_view.writeRed("Unable to choose: " + selectedHost);
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(750));
-    m_model.notify();
+    pressEnter(controller);
 }
 
 void AppCLIFeatures::restart(AppCLIController& controller)
 {
-
+    m_view.writeWhite("Available options:");
+    m_view.writeWhite("env - restarts whole environment");
+    m_view.writeWhite("retux - restarts retux adapter");
+    m_view.writeWhite("[serv-name] - restarts single server");
+    std::string arg = controller.read();
+    m_model.restart(arg);
+    pressEnter(controller);
 }
 
 void AppCLIFeatures::tlog(AppCLIController& controller)
 {
     m_view.writeWhite("Filename which to save to (empty for default): ");
+    std::string filename = controller.read();
+    if(filename.empty()){
+        filename = Utils::getCurrentDateTime();
+    }
+    m_model.tlog(filename);
+    pressEnter(controller);
+}
 
+void AppCLIFeatures::script(AppCLIController& controller)
+{
+    m_view.writeWhite("Enter script to execute: ");
+    m_model.script(controller.read());
+    pressEnter(controller);
+}
+
+void AppCLIFeatures::pressEnter(AppCLIController& controller)
+{
+    m_view.writeWhite("Press enter to continue...");
+    controller.read();
+    m_view.restart();
 }
 
 void AppCLIFeatures::help(AppCLIController& controller)

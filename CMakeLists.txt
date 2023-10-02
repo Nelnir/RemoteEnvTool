@@ -24,6 +24,7 @@ set(SOURCES
     src/AppCLIController.cpp
     src/AppCLIFeatures.cpp
     src/TelnetClient.cpp
+    src/Utils.cpp
 )
 
 add_executable(main ${SOURCES})
