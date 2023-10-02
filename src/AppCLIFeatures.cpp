@@ -2,6 +2,7 @@
 #include "AppCLIView.hpp"
 #include <thread>
 #include <iostream>
+#include "Utils.hpp"
 
 AppCLIFeatures::AppCLIFeatures(AppModel& model, AppCLIView& view) : m_model(model), m_view(view)
 {
@@ -10,6 +11,8 @@ AppCLIFeatures::AppCLIFeatures(AppModel& model, AppCLIView& view) : m_model(mode
     registerFeature("Transfer files", std::bind(&AppCLIFeatures::transferFiles, this, std::placeholders::_1), TRANSFER_FILES());
     registerFeature("Reset file snapshot", std::bind(&AppCLIFeatures::resetSnapshot, this, std::placeholders::_1), RESET_SNAPSHOT());
     registerFeature("Change host", std::bind(&AppCLIFeatures::changeHost, this, std::placeholders::_1), CHANGE_HOST());
+    registerFeature("Restart", std::bind(&AppCLIFeatures::restart, this, std::placeholders::_1), RESTART());
+    registerFeature("Tlog", std::bind(&AppCLIFeatures::tlog, this, std::placeholders::_1), TLOG());
     registerFeature("Help", std::bind(&AppCLIFeatures::help, this, std::placeholders::_1), HELP());
 }
 
@@ -142,6 +145,17 @@ void AppCLIFeatures::changeHost(AppCLIController& controller)
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(750));
     m_model.notify();
+}
+
+void AppCLIFeatures::restart(AppCLIController& controller)
+{
+
+}
+
+void AppCLIFeatures::tlog(AppCLIController& controller)
+{
+    m_view.writeWhite("Filename which to save to (empty for default): ");
+
 }
 
 void AppCLIFeatures::help(AppCLIController& controller)
