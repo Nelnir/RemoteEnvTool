@@ -110,6 +110,12 @@ void AppCLIFeatures::changeHost(AppCLIController& controller)
     const auto& selectedHost = controller.read();
     if(m_model.config().setValue(ConfigKey::DefaultHost, selectedHost)){
         m_view.writeGreen("Host was changed to: " + selectedHost);
+        if(m_model.isConnectedToFtp()){
+            m_model.m_ftp.disconnect();
+        }
+        if(m_model.telnet().isConnected()){
+            m_model.telnet().close();
+        }
     } else{
         m_view.writeRed("Unable to choose: " + selectedHost);
     }
