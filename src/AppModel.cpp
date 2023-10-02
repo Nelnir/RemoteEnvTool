@@ -174,14 +174,14 @@ bool AppModel::listChangedFiles()
     for(const auto& file : updated){
         notifyGood(file.string());
     }
-
+    notify("");
     const auto& added = m_monitor.filesAdded();
     if(!added.empty())
         notifyGood("ADDED:");
     for(const auto& file : added){
         notifyGood(file.string());
     }
-
+    notify("");
     const auto& removed = m_monitor.filesRemoved();
     if(!removed.empty())
         notifyBad("DELETED:");

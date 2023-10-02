@@ -9,7 +9,6 @@ AppCLIFeatures::AppCLIFeatures(AppModel& model, AppCLIView& view) : m_model(mode
     registerFeature("Exit", [this](const AppCLIController& controller) {}, EXIT_OPTION());
     registerFeature("List changed files", std::bind(&AppCLIFeatures::listChangedFiles, this, std::placeholders::_1), LISTS_FILE());
     registerFeature("Transfer files", std::bind(&AppCLIFeatures::transferFiles, this, std::placeholders::_1), TRANSFER_FILES());
-    registerFeature("Reset file snapshot", std::bind(&AppCLIFeatures::resetSnapshot, this, std::placeholders::_1), RESET_SNAPSHOT());
     registerFeature("Change host", std::bind(&AppCLIFeatures::changeHost, this, std::placeholders::_1), CHANGE_HOST());
     registerFeature("Restart", std::bind(&AppCLIFeatures::restart, this, std::placeholders::_1), RESTART());
     registerFeature("Tlog", std::bind(&AppCLIFeatures::tlog, this, std::placeholders::_1), TLOG());
@@ -97,13 +96,6 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
     pressEnter(controller);
 }
 
-void AppCLIFeatures::resetSnapshot(AppCLIController& controller)
-{
-    m_model.m_monitor.check();
-    m_view.writeWhite("Snapshot resetted.");
-    pressEnter(controller);
-}
-
 void AppCLIFeatures::changeHost(AppCLIController& controller)
 {
     m_view.writeWhite("Available hosts:");
@@ -165,4 +157,5 @@ void AppCLIFeatures::help(AppCLIController& controller)
     m_view.writeWhite("The left file must be modified in order to update the remote file via FTP.");
     m_view.writeWhite("To add new host, see file config.txt and update accordingly.");
     m_view.writeHelp();
+    pressEnter(controller);
 }

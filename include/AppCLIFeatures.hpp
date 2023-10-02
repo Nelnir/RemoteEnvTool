@@ -25,16 +25,14 @@ public:
     static int EXIT_OPTION()                {return 0;}
     static int LISTS_FILE()                 {return 1;}
     static int TRANSFER_FILES()             {return 2;}
-    static int RESET_SNAPSHOT()             {return 3;}
-    static int CHANGE_HOST()                {return 4;}
-    static int RESTART()                    {return 5;}
-    static int TLOG()                       {return 6;}
-    static int SCRIPT()                     {return 7;}
-    static int HELP()                       {return 8;}
+    static int CHANGE_HOST()                {return 3;}
+    static int RESTART()                    {return 4;}
+    static int TLOG()                       {return 5;}
+    static int SCRIPT()                     {return 6;}
+    static int HELP()                       {return 7;}
 private:
     void listChangedFiles(AppCLIController& controller);
     void transferFiles(AppCLIController& controller);
-    void resetSnapshot(AppCLIController& controller);
     void changeHost(AppCLIController& controller);
     void help(AppCLIController& controller);
     void restart(AppCLIController& controller);

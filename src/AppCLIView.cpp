@@ -23,22 +23,21 @@ opt("Allowed options"), m_features(model, *this)
 
 int AppCLIView::show(AppCLIController& controller)
 {
-    std::vector<std::string> simulated_args = {"--interactive"};
+    //std::vector<std::string> simulated_args = {"--interactive"};
     try{
         po::variables_map vm;
-        po::store(po::command_line_parser(simulated_args).options(opt).run(), vm);
-        //po::store(po::parse_command_line(argc, argv, opt), vm);
+        //po::store(po::command_line_parser(simulated_args).options(opt).run(), vm);
+        po::store(po::parse_command_line(argc, argv, opt), vm);
         po::notify(vm);    
 
-        if (vm.count("help") /*|| argc == 1*/){
+        if (vm.count("help") || argc == 1){
             writeHelp();
             return 0;
         }
         if(vm.count("interactive"))
             return interactive(controller);
         if(vm.count("list-file")){
-            executeInteractiveFeature(controller, AppCLIFeatures::LISTS_FILE());
-            return 0;
+            return !m_model.listChangedFiles();
         }
 
         // if host specified, update default host
