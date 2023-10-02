@@ -52,7 +52,7 @@ void PathMonitor::reset(const std::filesystem::path& file)
 {
     auto itr = m_data.find(file);
     if(itr == m_data.end()){
-        m_data[file] = {std::filesystem::last_write_time(file).time_since_epoch().count()};
+        //m_data[file] = {std::filesystem::last_write_time(file).time_since_epoch().count()};
     } else if(std::filesystem::exists(file)){
         itr->second.last_modified = std::filesystem::last_write_time(file).time_since_epoch().count();
     } else{ // file was deleted

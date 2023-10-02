@@ -37,6 +37,11 @@ private:
     void executeInteractiveFeature(AppCLIController& controller, const int& option);
     int executeTransferFeature(const po::variables_map& vm);
     int executeScriptFeature(const po::variables_map& vm);
+    int executeRestartFeature(const po::variables_map& vm);
+    int executeTlogFeature(const po::variables_map& vm);
+
+    bool connectToTelnet(const HostData& host);
+    bool connectToFTP(const HostData& host);
 };
 
 #endif

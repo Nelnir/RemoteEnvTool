@@ -74,7 +74,8 @@ bool TelnetClient::login(const std::string& username, const std::string& passwor
     });
 
     if(authFuture.wait_for(std::chrono::seconds(3)) == std::future_status::ready) {
-        std::this_thread::sleep_for(std::chrono::seconds(3));
+        // wait for all beginning data to be received
+        std::this_thread::sleep_for(std::chrono::milliseconds(4200));
         return authFuture.get();
     }
     return false;
@@ -105,7 +106,9 @@ std::future<std::string> TelnetClient::executeCommand(const std::string& command
                     std::cout << chunk;
                 }
 
-                if (chunk.find('>') != std::string::npos) {
+                // sometimes after some script executing we get results with current path enclosed in < path >,
+                // idk why is that, but the latter condition prevents early leaving
+                if (chunk.find('>') != std::string::npos && chunk.find('<') == std::string::npos) {
                     break;
                 }
 
