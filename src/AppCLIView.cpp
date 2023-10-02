@@ -20,7 +20,7 @@ opt("Allowed options"), m_features(model, *this)
 
 int AppCLIView::show(AppCLIController& controller)
 {
-    std::vector<std::string> simulated_args = {"--script", "build"};
+    std::vector<std::string> simulated_args = {"--script", "sprawy"};
     try{
         po::variables_map vm;
         po::store(po::command_line_parser(simulated_args).options(opt).run(), vm);
@@ -147,16 +147,18 @@ int AppCLIView::executeScriptFeature(const po::variables_map& vm)
     if(!m_model.connectToTelnet(host)){
         writeRed("Error: unable to connect via telnet to " + host.m_hostname);
         return 1;
-    } else{
-        writeGreen("Connected via telnet to: " + host.m_hostname);
+    }
+    if(!m_model.telnet().executeInitialScript(host.m_script)){
+        writeRed("Error: when executing initial script: " + host.m_script);
+        return 1;
     }
 
-    auto promise = m_model.telnet().executeCommand(". " + host.m_script);
+    writeGreen("Connected via telnet to: " + host.m_hostname);
 
-    if(promise.wait_for(std::chrono::seconds(5)) == std::future_status::ready)
-        std::cout << promise.get() << std::endl;
-    
     const auto& arg = vm["script"].as<std::string>();
+
+    writeWhite("Executing script: " + arg);
+    m_model.telnet().executeCommand(". " + arg, true);
     return 0;
 }
 

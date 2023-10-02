@@ -74,30 +74,71 @@ bool TelnetClient::login(const std::string& username, const std::string& passwor
     });
 
     if(authFuture.wait_for(std::chrono::seconds(3)) == std::future_status::ready) {
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::this_thread::sleep_for(std::chrono::seconds(3));
         return authFuture.get();
     }
     return false;
 }
 
-std::future<std::string> TelnetClient::executeCommand(const std::string& command)
+std::future<std::string> TelnetClient::executeCommand(const std::string& command, const bool& showResult)
 {
-    return std::async(std::launch::async, [this, command]() {
+    return std::async(std::launch::async, [this, command, showResult]() {
         BlockReadingGuard guard(m_blockReading);
         std::string fullCommand = command + "\n";
-        if (m_socket.send(fullCommand.c_str(), fullCommand.size()) == sf::Socket::Status::Done) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(COMMAND_COLLECTION_DATA_TIME));
+        std::string data;
+        
+        if (m_socket.send(fullCommand.c_str(), fullCommand.size()) != sf::Socket::Status::Done) {
+            throw std::runtime_error("Send failed");
+        }
+
+        m_socket.setBlocking(false);
+
+        auto startTime = std::chrono::steady_clock::now();
+        while (true) {
             std::size_t received;
-            if (m_socket.receive(m_buffer, sizeof(m_buffer), received) == sf::Socket::Status::Done) {
-                std::string data(reinterpret_cast<char*>(m_buffer), received);
-                return data;
+            auto status = m_socket.receive(m_buffer, sizeof(m_buffer), received);
+            if (status == sf::Socket::Status::Done) {
+                std::string chunk(reinterpret_cast<char*>(m_buffer), received);
+                data += chunk;
+
+                if (showResult) {
+                    std::cout << chunk;
+                }
+
+                if (chunk.find('>') != std::string::npos) {
+                    break;
+                }
+
+                if (received == 0) {
+                    break;  // if no data is received, we can also exit
+                }
+                startTime = std::chrono::steady_clock::now();
+            } else if(status == sf::Socket::Status::NotReady){
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                // if 10 seconds have elapsed since last data receive time, then exit
+                if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count() >= 10000) {
+                    data += "\nwarning: 10 seconds have elapsed since last data receive time\n";
+                    break;
+                }   
             } else {
                 throw std::runtime_error("Receive failed");
             }
-        } else {
-            throw std::runtime_error("Send failed");
         }
+        m_socket.setBlocking(true);
+        return data;
     });
+}
+
+bool TelnetClient::executeInitialScript(const std::string& script)
+{
+    auto promise = executeCommand(". " + script);
+    if(promise.wait_for(std::chrono::seconds(5)) == std::future_status::ready){
+        auto str = promise.get();
+        auto index = str.find_last_of(')') + 1;
+        m_home = str.substr(index, str.size() - index - 2); // remove space and '>'
+        return true;
+    }
+    return false;
 }
 
 void TelnetClient::handleReadThread()

@@ -16,12 +16,13 @@ class TelnetClient{
     std::atomic<bool> m_keepReading;
     std::atomic<bool> m_blockReading;
     std::string m_accumulatedData;
+    std::string m_home;
 public:
     TelnetClient();
     ~TelnetClient();
     bool connect(const sf::IpAddress& ip, const uint16_t& port = 23);
     bool login(const std::string& username, const std::string& password);
-    std::future<std::string> executeCommand(const std::string& command);
+    std::future<std::string> executeCommand(const std::string& command, const bool& showResult = false);
     bool write(const uint8_t*, const size_t& size);
     bool write(const std::string& text);
     bool isConnected() const;
@@ -29,12 +30,12 @@ public:
     void registerCallback(const std::string& trigger, const std::function<void()>& func){
         m_callbacks[trigger] = func;
     }
+    bool executeInitialScript(const std::string& script);
+    const std::string& home() const {return m_home;}
 private:
     void handleReadThread();
     void handleOption(const uint8_t& command, const uint8_t& option);
     std::unordered_map<std::string, std::function<void()>> m_callbacks;
-
-    static constexpr int COMMAND_COLLECTION_DATA_TIME = 3000;
 };
 
 #endif
