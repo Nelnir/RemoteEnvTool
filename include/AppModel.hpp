@@ -49,7 +49,7 @@ public:
     bool transfer(const std::string& arg);
 private:
     bool transferFile(const std::filesystem::path& file, const std::filesystem::path& to, const bool& suppressOutput = false);
-    std::filesystem::path getRemoteFileEquivalent(const std::string& file);
+    std::filesystem::path getRemoteFileEquivalent(const std::filesystem::path& file);
     std::pair<bool, std::string> uploadAddedFile(const std::filesystem::path& file, const bool& suppressOutput = false);
     std::pair<bool, std::string> updateRemoteFile(const std::filesystem::path& file, const bool& useDifftool, const bool& suppressOutput = false);
     std::pair<bool, std::string> deleteRemoteFile(const std::filesystem::path& file, const bool& suppressOutput = false);

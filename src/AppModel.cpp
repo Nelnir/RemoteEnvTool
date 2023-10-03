@@ -1,4 +1,5 @@
 #include "AppModel.hpp"
+#include <boost/algorithm/string/replace.hpp>
 #include <iostream>
 
 AppModel::AppModel() : m_monitor(m_configuration.getValue(ConfigKey::LocalPath))
@@ -6,10 +7,26 @@ AppModel::AppModel() : m_monitor(m_configuration.getValue(ConfigKey::LocalPath))
 
 }
 
+std::filesystem::path AppModel::getRemoteFileEquivalent(const std::filesystem::path& file)
+{
+    auto host = m_configuration.getCurrentHost();
+    std::string remote = m_workingDir + host.m_remotePath;
+    std::string local = m_configuration.getValue(ConfigKey::LocalPath);
+    std::string fileWithoutPath = file.string().size() > local.size() ? file.string().substr(local.size()) : file.string();
+    boost::replace_all(fileWithoutPath, "\\", "/");
+    if(!fileWithoutPath.empty()){
+        if(fileWithoutPath[0] == '/'){
+            fileWithoutPath = fileWithoutPath.substr(1);
+        }
+    }
+    remote += fileWithoutPath;
+    return remote;
+}
+
 std::pair<bool, std::string> AppModel::uploadAddedFile(const std::filesystem::path& file, const bool& suppressOutput)
 {
     std::pair<bool, std::string> ret;
-    const auto& remote = config().getRemoteFileEquivalent(file.string());
+    const auto& remote = getRemoteFileEquivalent(file.string());
     if(m_ftp.changeDirectory(remote.parent_path().string()).isOk()){
         ret.first = m_ftp.upload(file, "", sf::Ftp::TransferMode::Ascii).isOk();
         if(ret.first && !suppressOutput){
@@ -24,7 +41,7 @@ std::pair<bool, std::string> AppModel::uploadAddedFile(const std::filesystem::pa
 
 std::pair<bool, std::string> AppModel::updateRemoteFile(const std::filesystem::path& file, const bool& useDifftool, const bool& suppressOutput)
 {
-    const auto& remote = config().getRemoteFileEquivalent(file.string());
+    const auto& remote = getRemoteFileEquivalent(file.string());
     auto& result = downloadRemoteFile(file, true);
     if(!result.first){
         return std::make_pair(false, remote.string());
@@ -55,7 +72,7 @@ std::pair<bool, std::string> AppModel::updateRemoteFile(const std::filesystem::p
 std::pair<bool, std::string> AppModel::deleteRemoteFile(const std::filesystem::path& file, const bool& suppressOutput)
 {
     std::pair<bool, std::string> ret;
-    const auto& remote = config().getRemoteFileEquivalent(file.string());
+    const auto& remote = getRemoteFileEquivalent(file.string());
     if(m_ftp.changeDirectory(remote.parent_path().string()).isOk()){
         ret.first = m_ftp.deleteFile(remote).isOk();
         if(ret.first){
@@ -137,7 +154,7 @@ bool AppModel::isConnectedToFtp()
 std::pair<bool, std::string> AppModel::downloadRemoteFile(const std::filesystem::path& file, const bool& suppressOutput)
 {
     std::pair<bool, std::string> ret;
-    const auto& remote = config().getRemoteFileEquivalent(file.string());
+    const auto& remote = getRemoteFileEquivalent(file.string());
     if(m_ftp.changeDirectory(remote.parent_path().string()).isOk()){
         if(!std::filesystem::exists("temp/")){
             std::filesystem::create_directory("temp/");
@@ -151,6 +168,8 @@ std::pair<bool, std::string> AppModel::downloadRemoteFile(const std::filesystem:
         } else if(!suppressOutput){
             notifyBad("Error: when downloading file " + file.string());
         }
+    } else{
+        notifyBad("Error: when changing directory to " + remote.parent_path().string());
     }
     return ret;
 }
@@ -209,16 +228,18 @@ bool AppModel::tlog(const std::string& filename)
     auto temp = m_telnet.executeCommand("tlog > " + filename, true);
     std::string input;
     std::getline(std::cin, input);
-    m_telnet.executeCommand("\x03\x03");
+    m_telnet.executeCommand("\x03");
 
     notify("Connecting via FTP in order to download file...");
     if(!connectToFtp(host)){
         return false;
     }
+
     auto result = downloadRemoteFile(filename);
     if(!result.first){
         return false;
     }
+ 
     notify("Removing file from remote host...");
     result = deleteRemoteFile(filename);
     if(!result.first){
@@ -239,16 +260,13 @@ bool AppModel::restart(const std::string& arg)
     notify("Executing restart: " + arg);
     if(arg == "env"){
         m_telnet.executeCommand("tmshutdown -y", true);
-        std::cout << std::endl;
         m_telnet.executeCommand("tmboot -y", true);
     } else if(arg == "retux"){
         m_telnet.executeCommand("cd $APPDIR", true);
         m_telnet.executeCommand("./RetuxAdapter.sh stop", true);
-        std::cout << std::endl;
         m_telnet.executeCommand("./RetuxAdapter.sh start", true);
     } else{
         m_telnet.executeCommand("tmshutdown -s " + arg, true);
-        std::cout << std::endl;
         m_telnet.executeCommand("tmboot -s " + arg, true);
     }
     return true;

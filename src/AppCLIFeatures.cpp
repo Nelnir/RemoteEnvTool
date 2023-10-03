@@ -83,7 +83,7 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
     }
 
     for(const auto& file : m_model.monitor().filesRemoved()){
-        const auto& remote = m_model.config().getRemoteFileEquivalent(file);
+        const auto& remote = m_model.getRemoteFileEquivalent(file);
         m_view.writeWhite("Delete remote file (y/n): " + remote.string());
         if(controller.yes()){
             if(m_model.deleteRemoteFile(file).first){
