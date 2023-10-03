@@ -138,7 +138,7 @@ void AppCLIFeatures::tlog(AppCLIController& controller)
     m_view.writeWhite("Filename which to save to (empty for default): ");
     std::string filename = controller.read();
     if(filename.empty()){
-        filename = Utils::getCurrentDateTime();
+        filename = Utils::getCurrentDateTime() + ".txt";
     }
     m_model.tlog(filename);
     pressEnter(controller);
