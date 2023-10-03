@@ -126,13 +126,17 @@ void AppCLIFeatures::tlog(AppCLIController& controller)
 
 void AppCLIFeatures::script(AppCLIController& controller)
 {
-    m_view.writeWhite("Executing script");
+    m_view.writeWhite("Executing script ($in to go to base path)");
     auto text = m_model.telnet().pwd();
-    if(text.empty())
-        text = "script";
     m_view.writeWhite(text, false);
     std::string arg = controller.read();
     if(arg.empty()) return;
+    if(arg == "$in"){
+        m_model.telnet().executeCommand("cd " + m_model.telnet().home(), false, true);
+        m_view.writeWhite(m_model.telnet().home(), false);
+        arg = controller.read();
+        if(arg.empty()) return;
+    }
     m_model.script(arg);
     pressEnter(controller);
 }

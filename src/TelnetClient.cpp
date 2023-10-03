@@ -82,15 +82,19 @@ bool TelnetClient::login(const std::string& username, const std::string& passwor
     return false;
 }
 
-std::future<std::string> TelnetClient::executeCommand(const std::string& command, const bool& showResult)
+std::future<std::string> TelnetClient::executeCommand(const std::string& command, const bool& showResult, const bool& exitImmediately)
 {
-    return std::async(std::launch::async, [this, command, showResult]() {
+    return std::async(std::launch::async, [this, command, showResult, exitImmediately]() {
         BlockReadingGuard guard(m_blockReading);
         std::string fullCommand = command + "\n";
         std::string data;
         
         if (m_socket.send(fullCommand.c_str(), fullCommand.size()) != sf::Socket::Status::Done) {
             throw std::runtime_error("Send failed");
+        }
+
+        if(exitImmediately){
+            return data;
         }
 
         m_socket.setBlocking(false);

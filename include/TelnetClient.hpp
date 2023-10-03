@@ -23,7 +23,7 @@ public:
     ~TelnetClient();
     bool connect(const sf::IpAddress& ip, const uint16_t& port = 23);
     bool login(const std::string& username, const std::string& password);
-    std::future<std::string> executeCommand(const std::string& command, const bool& showResult = false);
+    std::future<std::string> executeCommand(const std::string& command, const bool& showResult = false, const bool& exitImmediately = false);
     bool write(const uint8_t*, const size_t& size);
     bool write(const std::string& text);
     bool isConnected() const;
