@@ -1,6 +1,7 @@
 #include "TelnetClient.hpp"
 #include <sstream>
 #include <iostream>
+#include "Utils.hpp"
 
 class BlockReadingGuard {
 public:
@@ -108,9 +109,7 @@ std::future<std::string> TelnetClient::executeCommand(const std::string& command
                 // sometimes after some script executing we get results with current path enclosed in < path >,
                 // idk why is that, but the latter condition prevents early leaving
                 if (chunk.find('>') != std::string::npos && chunk.find('<') == std::string::npos) {
-                    auto last_line_index = data.find_last_of("\r\n", chunk.find_last_of("\r\n") + 1);
-                    auto index = data.find_first_of('/', last_line_index);
-                    m_pwd = data.substr(index, data.find('>') - index); // remove '>'
+                    m_pwd = Utils::getPwd(data);
                     break;
                 }
 
@@ -141,9 +140,7 @@ bool TelnetClient::executeInitialScript(const std::string& script)
     auto promise = executeCommand(". " + script);
     if(promise.wait_for(std::chrono::seconds(5)) == std::future_status::ready){
         std::this_thread::sleep_for(std::chrono::seconds(5)); // wait for all beginning data to be sent
-        auto str = promise.get();
-        auto index = str.find_last_of(')') + 1;
-        m_home = m_pwd = str.substr(index, str.size() - index - 2); // remove space and '>'
+        m_home = m_pwd = Utils::getPwd(promise.get());
         return true;
     }
     return false;

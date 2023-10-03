@@ -8,6 +8,7 @@
 
 namespace Utils{
 std::string getCurrentDateTime();
+std::string getPwd(const std::string& str);
 }
 
 #endif
