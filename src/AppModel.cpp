@@ -10,29 +10,21 @@ AppModel::AppModel() : m_monitor(m_configuration.getValue(ConfigKey::LocalPath))
 std::filesystem::path AppModel::getRemoteFileEquivalent(const std::filesystem::path& file)
 {
     auto host = m_configuration.getCurrentHost();
-    std::string remote = m_workingDir + host.m_remotePath;
-    std::string local = m_configuration.getValue(ConfigKey::LocalPath);
-    std::string fileWithoutPath = file.string().size() > local.size() ? file.string().substr(local.size()) : file.string();
-    boost::replace_all(fileWithoutPath, "\\", "/");
-    if(!fileWithoutPath.empty()){
-        if(fileWithoutPath[0] == '/'){
-            fileWithoutPath = fileWithoutPath.substr(1);
-        }
-    }
-    remote += fileWithoutPath;
+    std::string remote = m_workingDir + host.m_remotePath + (host.m_remotePath.back() == '/' ? "" : "/") + file.string();
     return remote;
 }
 
 std::pair<bool, std::string> AppModel::uploadAddedFile(const std::filesystem::path& file, const bool& suppressOutput)
 {
+    auto local_file = m_configuration.getValue(ConfigKey::LocalPath) + file.string();
     std::pair<bool, std::string> ret;
     const auto& remote = getRemoteFileEquivalent(file.string());
     if(m_ftp.changeDirectory(remote.parent_path().string()).isOk()){
-        ret.first = m_ftp.upload(file, "", sf::Ftp::TransferMode::Ascii).isOk();
+        ret.first = m_ftp.upload(local_file, "", sf::Ftp::TransferMode::Ascii).isOk();
         if(ret.first && !suppressOutput){
-            notifyGood("Success: file uploaded " + file.string());
+            notifyGood("Success: file uploaded " + local_file);
         } else if(!suppressOutput){
-            notifyBad("Error: when uploading file " + file.string());
+            notifyBad("Error: when uploading file " + local_file);
         }
     }
     ret.second = remote.string();
@@ -41,30 +33,32 @@ std::pair<bool, std::string> AppModel::uploadAddedFile(const std::filesystem::pa
 
 std::pair<bool, std::string> AppModel::updateRemoteFile(const std::filesystem::path& file, const bool& useDifftool, const bool& suppressOutput)
 {
-    const auto& remote = getRemoteFileEquivalent(file.string());
+    auto local_file = m_configuration.getValue(ConfigKey::LocalPath) + file.string();
+    auto remote = getRemoteFileEquivalent(file);
     auto& result = downloadRemoteFile(file, true);
     if(!result.first){
-        return std::make_pair(false, remote.string());
+        return std::make_pair(false, result.second);
     }
     std::string fileToUpload;
     if(useDifftool){
         // force file change
-        if(!difftool(result.second, file.string())){
+        if(!difftool(result.second, local_file)){
+            notifyBad("Error: left file must be edited");
             std::filesystem::remove(result.second);
             return std::make_pair(false, remote.string());
         }
         fileToUpload = result.second;
     } else{
-        fileToUpload = file.string();
+        fileToUpload = local_file;
     }
     result.first = transferFile(fileToUpload, remote, true);
     std::filesystem::remove(result.second);
     if(result.first){
         if(!suppressOutput){
-            notifyGood("Success: file updated " + result.first);
+            notifyGood("Success: file updated " + remote.string());
         }
     } else if(!suppressOutput){
-        notifyBad("Error: when updating file " + result.first);
+        notifyBad("Error: when updating file " + remote.string());
     }
     return std::make_pair(result.first, remote.string());
 }
@@ -187,23 +181,30 @@ bool AppModel::difftool(const std::string& first, const std::string& second)
 bool AppModel::listChangedFiles()
 {
     m_monitor.check();
+
     const auto& updated = m_monitor.filesUpdated();
     if(!updated.empty())
         notifyGood("UPDATED:");
     for(const auto& file : updated){
         notifyGood(file.string());
     }
-    notify("");
+
     const auto& added = m_monitor.filesAdded();
-    if(!added.empty())
+    if(!added.empty()){
+        if(!updated.empty())
+            notify("");
         notifyGood("ADDED:");
+    }
     for(const auto& file : added){
         notifyGood(file.string());
     }
-    notify("");
+
     const auto& removed = m_monitor.filesRemoved();
-    if(!removed.empty())
+    if(!removed.empty()){
+        if(!added.empty())
+            notify("");
         notifyBad("DELETED:");
+    }
     for(const auto& file : removed){
         notifyBad(file.string());
     }

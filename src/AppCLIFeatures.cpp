@@ -39,10 +39,7 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
 
     if(!m_model.isConnectedToFtp()){
         m_view.writeWhite("Connecting to ftp server...");
-        if(m_model.connectToFtp(m_model.config().getCurrentHost())){
-            m_view.writeGreen("Success");
-        } else{
-            m_view.writeRed("Error when connecting to ftp.");
+        if(!m_model.connectToFtp(m_model.config().getCurrentHost())){
             return;
         }
     }
@@ -57,28 +54,14 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
                 if(!controller.yes())
                     continue;
             }
-            const auto& result = m_model.updateRemoteFile(file, difftool);
-            if(!result.first){
-                if(difftool){
-                    m_view.writeRed("Unable to update file (left file must be changed): " + result.second);
-                } else{
-                    m_view.writeRed("Unable to update file: " + result.second);
-                }
-            } else{
-                m_view.writeGreen("File updated: " + result.second);
-            }
+            m_model.updateRemoteFile(file, difftool);
         }
     }
 
     for(const auto& file : m_model.monitor().filesAdded()){
         m_view.writeWhite("Upload file (y/n): " + file.string());
         if(controller.yes()){
-            const auto& result = m_model.uploadAddedFile(file);
-            if(result.first){
-                m_view.writeGreen("File uploaded: " + result.second);
-            } else{
-                m_view.writeRed("Error: unable to upload " + result.second);
-            }
+            m_model.uploadAddedFile(file);
         }
     }
 
@@ -86,11 +69,7 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
         const auto& remote = m_model.getRemoteFileEquivalent(file);
         m_view.writeWhite("Delete remote file (y/n): " + remote.string());
         if(controller.yes()){
-            if(m_model.deleteRemoteFile(file).first){
-                m_view.writeGreen("File removed: " + remote.string());
-            } else{
-                m_view.writeRed("Error: unable to delete " + remote.string());
-            }
+            m_model.deleteRemoteFile(file);
         }
     }
     pressEnter(controller);

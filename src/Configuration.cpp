@@ -132,6 +132,8 @@ bool Configuration::readFile()
         if(key != ConfigKey::None){
             // Handling config data
             auto itr = m_configData.find(key);
+            if(key == ConfigKey::LocalPath && value.back() != '/')
+                value += '/';
             if(itr != m_configData.end()){
                 itr->second = value;
             } else{
