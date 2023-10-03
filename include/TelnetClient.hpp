@@ -17,6 +17,7 @@ class TelnetClient{
     std::atomic<bool> m_blockReading;
     std::string m_accumulatedData;
     std::string m_home;
+    std::string m_pwd;
 public:
     TelnetClient();
     ~TelnetClient();
@@ -32,6 +33,7 @@ public:
     }
     bool executeInitialScript(const std::string& script);
     const std::string& home() const {return m_home;}
+    const std::string& pwd() const {return m_pwd;}
 private:
     void handleReadThread();
     void handleOption(const uint8_t& command, const uint8_t& option);

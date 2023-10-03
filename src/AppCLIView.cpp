@@ -158,9 +158,11 @@ void AppCLIView::writeRed(const std::string& text)
 #endif
 }
 
-void AppCLIView::writeWhite(const std::string& text)
+void AppCLIView::writeWhite(const std::string& text, const bool& addNewLine)
 {
-    std::cout << text << std::endl;
+    std::cout << text;
+    if(addNewLine)
+        std::cout << std::endl;
 }
 
 void AppCLIView::writeHelp()

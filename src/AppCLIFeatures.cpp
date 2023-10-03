@@ -111,7 +111,7 @@ void AppCLIFeatures::changeHost(AppCLIController& controller)
     if(m_model.config().setValue(ConfigKey::DefaultHost, selectedHost)){
         m_view.writeGreen("Host was changed to: " + selectedHost);
         if(m_model.isConnectedToFtp()){
-            m_model.m_ftp.disconnect();
+            void(m_model.m_ftp.disconnect());
         }
         if(m_model.telnet().isConnected()){
             m_model.telnet().close();
@@ -146,7 +146,11 @@ void AppCLIFeatures::tlog(AppCLIController& controller)
 
 void AppCLIFeatures::script(AppCLIController& controller)
 {
-    m_view.writeWhite("Enter script to execute: ");
+    m_view.writeWhite("Executing script");
+    auto text = m_model.telnet().pwd();
+    if(text.empty())
+        text = "script";
+    m_view.writeWhite(text, false);
     m_model.script(controller.read());
     pressEnter(controller);
 }
