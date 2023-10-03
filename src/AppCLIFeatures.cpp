@@ -129,13 +129,14 @@ void AppCLIFeatures::restart(AppCLIController& controller)
     m_view.writeWhite("retux - restarts retux adapter");
     m_view.writeWhite("[serv-name] - restarts single server");
     std::string arg = controller.read();
+    if(arg.empty()) return;
     m_model.restart(arg);
     pressEnter(controller);
 }
 
 void AppCLIFeatures::tlog(AppCLIController& controller)
 {
-    m_view.writeWhite("Filename which to save to (empty for default): ");
+    m_view.writeWhite("Filename which to save to (empty for current date): ");
     std::string filename = controller.read();
     if(filename.empty()){
         filename = Utils::getCurrentDateTime() + ".txt";
@@ -151,7 +152,9 @@ void AppCLIFeatures::script(AppCLIController& controller)
     if(text.empty())
         text = "script";
     m_view.writeWhite(text, false);
-    m_model.script(controller.read());
+    std::string arg = controller.read();
+    if(arg.empty()) return;
+    m_model.script(arg);
     pressEnter(controller);
 }
 
