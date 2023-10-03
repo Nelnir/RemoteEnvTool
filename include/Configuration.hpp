@@ -100,7 +100,7 @@ public:
      * 
      * @return true if the data was saved successfully; false otherwise.
      */
-    bool saveFile() const;
+    bool saveFile();
 
     bool setValue(const ConfigKey& key, const std::string& value);
     bool setHostValue(const std::string& host, const HostConfig& key, const std::string& value);
@@ -120,6 +120,7 @@ private:
     std::map<ConfigKey, std::string> m_configData;
     std::unordered_map<std::string, HostData> m_hosts;
     const std::string m_configFile;
+    bool m_save;
 };
 
 #endif

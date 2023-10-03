@@ -3,7 +3,7 @@
 #include <sstream>
 #include <iostream>
 
-Configuration::Configuration(const std::string& path) : m_configFile(path)
+Configuration::Configuration(const std::string& path) : m_configFile(path), m_save(false)
 {
     if(!readFile()){
         setDefaultValues();
@@ -24,7 +24,11 @@ bool Configuration::setValue(const ConfigKey& key, const std::string& value)
     }
     auto itr = m_configData.find(key);
     bool ret = itr != m_configData.end();
-    if(ret) itr->second = value;
+    if(ret){
+        itr->second = value;
+        m_save = true;
+        saveFile();
+    }
     return ret;
 }
 
@@ -46,6 +50,7 @@ bool Configuration::setHostValue(const std::string& host, const HostConfig& key,
             m_hosts.emplace(value, copy);
         break;
     }
+    m_save = true;
     return true;
 }
 
@@ -93,6 +98,7 @@ bool Configuration::deleteHost(const std::string& host)
     if(itr == m_hosts.end())
         return false;
     m_hosts.erase(itr);
+    m_save = true;
     return true;
 }
 
@@ -161,8 +167,9 @@ bool Configuration::readFile()
     return true;
 }
 
-bool Configuration::saveFile() const
+bool Configuration::saveFile()
 {
+    if(!m_save) return false;
     std::ofstream file(m_configFile);
     if (!file) return false;
     for (const auto& pair : m_configData)
@@ -176,6 +183,7 @@ bool Configuration::saveFile() const
              << keyToString(HostConfig::Script) << " " << pair.second.m_script << '\n'
              << keyToString(HostConfig::Port) << " " << pair.second.m_port << "\n\n";
     file.close();
+    m_save = false;
     return true;
 }
 

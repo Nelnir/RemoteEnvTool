@@ -1,6 +1,7 @@
 #include "AppModel.hpp"
 #include "AppCLIController.hpp"
 #include "AppCLIView.hpp"
+
 int main(int argc, char** argv)
 {
     AppModel model;
