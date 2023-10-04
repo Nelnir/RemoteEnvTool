@@ -125,8 +125,7 @@ void AppCLIFeatures::tlog(AppCLIController& controller)
     if(result.first){
         m_view.writeWhite("Open downloaded file with notepad++? (y/n)");
         if(controller.yes()){
-            std::string cmd = "notepad++ " + result.second;
-            system(cmd.c_str());
+            std::thread([result](){system(std::string("notepad++ " + result.second).c_str());}).detach();
         }
     }
     pressEnter(controller);
