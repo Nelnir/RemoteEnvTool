@@ -231,9 +231,11 @@ std::pair<bool, std::string> AppModel::tlog(const std::string& filename)
     std::getline(std::cin, input);
     m_telnet.executeCommand("\x03");
 
-    notify("Connecting via FTP in order to download file...");
-    if(!connectToFtp(host)){
-        return std::make_pair(false, "");
+    if(!isConnectedToFtp()){
+        notify("Connecting via FTP in order to download file...");
+        if(!connectToFtp(host)){
+            return std::make_pair(false, "");
+        }
     }
 
     auto result = downloadRemoteFile(filename);
