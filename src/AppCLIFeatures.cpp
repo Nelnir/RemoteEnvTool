@@ -3,6 +3,7 @@
 #include <thread>
 #include <iostream>
 #include "Utils.hpp"
+#include "Windows.h"
 
 AppCLIFeatures::AppCLIFeatures(AppModel& model, AppCLIView& view) : m_model(model), m_view(view)
 {
@@ -120,7 +121,14 @@ void AppCLIFeatures::tlog(AppCLIController& controller)
     if(filename.empty()){
         filename = Utils::getCurrentDateTime() + ".txt";
     }
-    m_model.tlog(filename);
+    auto result = m_model.tlog(filename);
+    if(result.first){
+        m_view.writeWhite("Open downloaded file with notepad++? (y/n)");
+        if(controller.yes()){
+            std::string cmd = "notepad++ " + result.second;
+            system(cmd.c_str());
+        }
+    }
     pressEnter(controller);
 }
 
@@ -130,7 +138,10 @@ void AppCLIFeatures::script(AppCLIController& controller)
     auto text = m_model.telnet().pwd();
     m_view.writeWhite(text, false);
     std::string arg = controller.read();
-    if(arg.empty()) return;
+    if(arg.empty()){
+        pressEnter(controller);
+        return;
+    }
     if(arg == "$in"){
         m_model.telnet().executeCommand("cd " + m_model.telnet().home(), false, true);
         m_view.writeWhite(m_model.telnet().home(), false);

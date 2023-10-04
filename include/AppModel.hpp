@@ -43,7 +43,7 @@ public:
     TelnetClient& telnet() { return m_telnet; }
 
     bool listChangedFiles();
-    bool tlog(const std::string& filename);
+    std::pair<bool, std::string> tlog(const std::string& filename);
     bool restart(const std::string& arg);
     bool script(const std::string& script);
     bool transfer(const std::string& arg);

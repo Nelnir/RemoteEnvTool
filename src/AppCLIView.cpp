@@ -64,7 +64,7 @@ int AppCLIView::show(AppCLIController& controller)
 
         if(vm.count("tlog")){
             const auto& filename = vm["tlog"].as<std::string>();
-            return !m_model.tlog(filename.empty() ? Utils::getCurrentDateTime() + ".txt": filename);
+            return !m_model.tlog(filename.empty() ? Utils::getCurrentDateTime() + ".txt": filename).first;
         }
         
 

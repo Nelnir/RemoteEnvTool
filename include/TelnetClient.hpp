@@ -18,6 +18,7 @@ class TelnetClient{
     std::string m_accumulatedData;
     std::string m_home;
     std::string m_pwd;
+    sf::Clock keepAliveClock;
 public:
     TelnetClient();
     ~TelnetClient();

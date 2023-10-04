@@ -214,12 +214,12 @@ bool AppModel::listChangedFiles()
     return true;
 }
 
-bool AppModel::tlog(const std::string& filename)
+std::pair<bool, std::string> AppModel::tlog(const std::string& filename)
 {
     auto host = m_configuration.getCurrentHost();
     if(!m_telnet.isConnected()){
         if(!connectToTelnet(host)){
-            return false;
+            return std::make_pair(false, "");
         }
     }
 
@@ -233,20 +233,15 @@ bool AppModel::tlog(const std::string& filename)
 
     notify("Connecting via FTP in order to download file...");
     if(!connectToFtp(host)){
-        return false;
+        return std::make_pair(false, "");
     }
 
     auto result = downloadRemoteFile(filename);
-    if(!result.first){
-        return false;
+    if(result.first){
+        notify("Removing file from remote host...");
+        deleteRemoteFile(filename);
     }
- 
-    notify("Removing file from remote host...");
-    result = deleteRemoteFile(filename);
-    if(!result.first){
-        return false;
-    }
-    return true;
+    return result;
 }
 
 bool AppModel::restart(const std::string& arg)
