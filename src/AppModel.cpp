@@ -284,7 +284,7 @@ bool AppModel::script(const std::string& script)
     return 0;
 }
 
-bool AppModel::transfer(const std::string& arg)
+bool AppModel::transfer(const std::string& arg, const bool& useDifftool)
 {
     if(!isConnectedToFtp()){
         if(!connectToFtp(m_configuration.getCurrentHost())){
@@ -292,11 +292,15 @@ bool AppModel::transfer(const std::string& arg)
         }
     }
 
-    m_monitor.check();
+    if(!m_monitor.check()){
+        notify("No files changed.");
+        return true;
+    }
 
     if(arg == "updated" || arg == "all"){
         for(const auto& file : m_monitor.filesUpdated()){
-            const auto& result = updateRemoteFile(file, true);
+            notify("Updating file: " + file.string());
+            const auto& result = updateRemoteFile(file, useDifftool);
             if(!result.first){
                 return false;
             }
@@ -305,7 +309,8 @@ bool AppModel::transfer(const std::string& arg)
 
     if(arg == "added" || arg == "all"){
         for(const auto& file : m_monitor.filesAdded()){
-            const auto& result = uploadAddedFile(file);
+            notify("Uploading file: " + file.string());
+            const auto& result = uploadAddedFile(file, useDifftool);
             if(!result.first){
                 return false;
             }
@@ -313,7 +318,8 @@ bool AppModel::transfer(const std::string& arg)
     }
     if(arg == "deleted" || arg == "all"){
         for(const auto& file : m_monitor.filesRemoved()){
-            const auto& result = deleteRemoteFile(file);
+            notify("Deleting file: " + file.string());
+            const auto& result = deleteRemoteFile(file, useDifftool);
             if(!result.first){
                 return false;
             }

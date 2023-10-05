@@ -46,7 +46,8 @@ public:
     std::pair<bool, std::string> tlog(const std::string& filename);
     bool restart(const std::string& arg);
     bool script(const std::string& script);
-    bool transfer(const std::string& arg);
+    bool transfer(const std::string& arg, const bool& useDifftool);
+
 private:
     bool transferFile(const std::filesystem::path& file, const std::filesystem::path& to, const bool& suppressOutput = false);
     std::filesystem::path getRemoteFileEquivalent(const std::filesystem::path& file);

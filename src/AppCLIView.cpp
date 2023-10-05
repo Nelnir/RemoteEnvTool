@@ -11,9 +11,11 @@ opt("Allowed options"), m_features(model, *this)
     ("interactive", "enable interactive mode")
     ("list-file", "lists files changed")
     ("transfer", po::value<std::string>(), "send files to remote host\narg values: added, deleted, updated, all")
-    ("script", po::value<std::string>(), "execute telnet script\narg values: script name to be executed")
+    ("transfer-branch", po::value<std::string>(), "lists and sends all files modified between current branch and selected branch\narg values: branch to compare with")
+    ("script", po::value<std::string>(), "execute telnet script\narg values: script name to be executed (. dot will be added on beginning)")
     ("restart", po::value<std::string>(), "restarts specified object\narg values: env (whole domain), retux (adapter), SERV-NAME (single server)")
     ("tlog", po::value<std::string>()->implicit_value(""), "starts writing log to a file\narg values: filename which to save (if no value is passed, current date will be used)")
+    ("no-difftool", "transfering files involves firstly comparing them via difftool, if that option is passed, difftool wont be used")
     ;
 
 #ifdef _WIN32
@@ -23,7 +25,7 @@ opt("Allowed options"), m_features(model, *this)
 
 int AppCLIView::show(AppCLIController& controller)
 {
-    //std::vector<std::string> simulated_args = {"--interactive"};
+    //std::vector<std::string> simulated_args = {"--transfer", "all"};
     try{
         po::variables_map vm;
         //po::store(po::command_line_parser(simulated_args).options(opt).run(), vm);
@@ -40,6 +42,11 @@ int AppCLIView::show(AppCLIController& controller)
             return !m_model.listChangedFiles();
         }
 
+        bool useDifftool = true;
+
+        if(vm.count("no-difftool"))
+            useDifftool = false;
+
         // if host specified, update default host
         if(vm.count("host")){
             const auto& host = vm["host"].as<std::string>();
@@ -51,7 +58,16 @@ int AppCLIView::show(AppCLIController& controller)
 
 
         if(vm.count("transfer")){
-            return !m_model.transfer(vm["transfer"].as<std::string>());
+            return !m_model.transfer(vm["transfer"].as<std::string>(), useDifftool);
+        }
+
+        if(vm.count("transfer-branch")){
+            auto branchStrategy = std::make_unique<GitBranchChangesStrategy>();
+            branchStrategy->compareWith(vm["transfer-branch"].as<std::string>());
+            m_model.monitor().setStrategy(std::move(branchStrategy));
+            if(!m_model.listChangedFiles())
+                return 0;
+            return !m_model.transfer("all", useDifftool);
         }
 
         if(vm.count("script")){
