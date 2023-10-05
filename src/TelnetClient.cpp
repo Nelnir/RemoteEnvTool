@@ -104,6 +104,7 @@ std::future<std::string> TelnetClient::executeCommand(const std::string& command
 
         m_socket.setBlocking(false);
         auto startTime = std::chrono::steady_clock::now();
+        bool building = false;
         while (true) {
             std::size_t received;
             auto status = m_socket.receive(m_buffer, sizeof(m_buffer), received);
@@ -120,6 +121,9 @@ std::future<std::string> TelnetClient::executeCommand(const std::string& command
                 if (chunk.find('>') != std::string::npos && chunk.find('<') == std::string::npos) {
                     m_pwd = Utils::getPwd(data);
                     break;
+                } // if we find string making target then we are building, increase exit time to 1 minute (set building to true)
+                else if(chunk.find("making target")){
+                    building = true;
                 }
 
                 if (received == 0) {
@@ -128,8 +132,8 @@ std::future<std::string> TelnetClient::executeCommand(const std::string& command
                 startTime = std::chrono::steady_clock::now();
             } else if(status == sf::Socket::Status::NotReady){
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                // if 20 seconds have elapsed since last data receive time, then exit
-                if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count() >= 20000) {
+                if ((std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count() >= 20000 && !building) ||
+                    (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - startTime).count() >= 60000 && building)) {
                     break;
                 }   
             } else {
@@ -211,7 +215,7 @@ void TelnetClient::handleReadThread()
             }
         }
 
-        if(keepAliveClock.getElapsedTime().asSeconds() >= 300){
+        if(keepAliveClock.getElapsedTime().asSeconds() >= 300 && m_socket.isBlocking()){
             void(m_socket.send(" ", 1));
             m_accumulatedData.clear();
             keepAliveClock.restart();
