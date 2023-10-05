@@ -29,16 +29,21 @@ public:
     static int RESTART()                    {return 4;}
     static int TLOG()                       {return 5;}
     static int SCRIPT()                     {return 6;}
-    static int HELP()                       {return 7;}
+    static int BRANCH_CHANGES()             {return 7;}
+    static int HELP()                       {return 8;}
 private:
     void listChangedFiles(AppCLIController& controller);
-    void transferFiles(AppCLIController& controller);
+    void transferChangedFiles(AppCLIController& controller);
     void changeHost(AppCLIController& controller);
     void help(AppCLIController& controller);
     void restart(AppCLIController& controller);
     void tlog(AppCLIController& controller);
     void script(AppCLIController& controller);
+    void transferBranchFiles(AppCLIController& controller);
     void pressEnter(AppCLIController& controller);
+
+    // HELPER
+    void transferFiles(AppCLIController& controller);
 };
 
 #endif

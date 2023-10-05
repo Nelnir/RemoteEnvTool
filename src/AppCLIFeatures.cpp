@@ -9,11 +9,12 @@ AppCLIFeatures::AppCLIFeatures(AppModel& model, AppCLIView& view) : m_model(mode
 {
     registerFeature("Exit", [this](const AppCLIController& controller) {}, EXIT_OPTION());
     registerFeature("List changed files", std::bind(&AppCLIFeatures::listChangedFiles, this, std::placeholders::_1), LISTS_FILE());
-    registerFeature("Transfer files", std::bind(&AppCLIFeatures::transferFiles, this, std::placeholders::_1), TRANSFER_FILES());
+    registerFeature("Transfer files", std::bind(&AppCLIFeatures::transferChangedFiles, this, std::placeholders::_1), TRANSFER_FILES());
     registerFeature("Change host", std::bind(&AppCLIFeatures::changeHost, this, std::placeholders::_1), CHANGE_HOST());
     registerFeature("Restart", std::bind(&AppCLIFeatures::restart, this, std::placeholders::_1), RESTART());
     registerFeature("Tlog", std::bind(&AppCLIFeatures::tlog, this, std::placeholders::_1), TLOG());
     registerFeature("Script", std::bind(&AppCLIFeatures::script, this, std::placeholders::_1), SCRIPT());
+    registerFeature("Branch-changes", std::bind(&AppCLIFeatures::transferBranchFiles, this, std::placeholders::_1), BRANCH_CHANGES());
     registerFeature("Help", std::bind(&AppCLIFeatures::help, this, std::placeholders::_1), HELP());
 }
 
@@ -27,52 +28,15 @@ void AppCLIFeatures::registerFeature(const std::string& name, const FeatureCallb
 
 void AppCLIFeatures::listChangedFiles(AppCLIController& controller)
 {
+    m_model.m_monitor.setStrategy(std::make_unique<GitMonitoringStrategy>());
     m_model.listChangedFiles();
     pressEnter(controller);
 }
 
-void AppCLIFeatures::transferFiles(AppCLIController& controller)
+void AppCLIFeatures::transferChangedFiles(AppCLIController& controller)
 {
-    if(!m_model.m_monitor.check()){
-        m_view.writeWhite("No files changed.");
-        return;
-    }
-
-    if(!m_model.isConnectedToFtp()){
-        m_view.writeWhite("Connecting to ftp server...");
-        if(!m_model.connectToFtp(m_model.config().getCurrentHost())){
-            return;
-        }
-    }
-
-    for(const auto& file : m_model.monitor().filesUpdated()){
-        m_view.writeWhite("Update file (y/n): " + file.string());
-        if(controller.yes()){
-            m_view.writeWhite("Use difftool (y/n):");
-            const auto& difftool = controller.yes();
-            if(!difftool){
-                m_view.writeWhite("Then simply overwrite remote with local (y/n)?");
-                if(!controller.yes())
-                    continue;
-            }
-            m_model.updateRemoteFile(file, difftool);
-        }
-    }
-
-    for(const auto& file : m_model.monitor().filesAdded()){
-        m_view.writeWhite("Upload file (y/n): " + file.string());
-        if(controller.yes()){
-            m_model.uploadAddedFile(file);
-        }
-    }
-
-    for(const auto& file : m_model.monitor().filesRemoved()){
-        const auto& remote = m_model.getRemoteFileEquivalent(file);
-        m_view.writeWhite("Delete remote file (y/n): " + remote.string());
-        if(controller.yes()){
-            m_model.deleteRemoteFile(file);
-        }
-    }
+    m_model.m_monitor.setStrategy(std::make_unique<GitMonitoringStrategy>());
+    transferFiles(controller);
     pressEnter(controller);
 }
 
@@ -149,6 +113,73 @@ void AppCLIFeatures::script(AppCLIController& controller)
     }
     m_model.script(arg);
     pressEnter(controller);
+}
+
+void AppCLIFeatures::transferBranchFiles(AppCLIController& controller)
+{
+    auto branchStrategy = std::make_unique<GitBranchChangesStrategy>();
+    auto currentBranch = branchStrategy->getCurrentBranch(m_model.m_monitor.getPath());
+    auto index = currentBranch.find("DEV");
+    auto compareBranch = currentBranch.substr(0, index + 3);
+    m_view.writeWhite("Compare files from " + currentBranch + " with branch (empty for " + compareBranch+ "): ");
+    std::string branch;
+    branch = controller.read();
+    if(branch.empty()){
+        branch = compareBranch;
+    }
+    branchStrategy->compareWith(branch);
+    m_model.m_monitor.setStrategy(std::move(branchStrategy));
+    if(m_model.listChangedFiles()){
+        m_view.writeWhite("Proceed to transfer files via FTP? (y/n):");
+        if(controller.yes()){
+            transferFiles(controller);
+        }
+    }
+    pressEnter(controller);
+}
+
+void AppCLIFeatures::transferFiles(AppCLIController& controller)
+{
+    if(!m_model.m_monitor.check()){
+        m_view.writeWhite("No files changed.");
+        return;
+    }
+
+    if(!m_model.isConnectedToFtp()){
+        m_view.writeWhite("Connecting to ftp server...");
+        if(!m_model.connectToFtp(m_model.config().getCurrentHost())){
+            return;
+        }
+    }
+
+    for(const auto& file : m_model.m_monitor.filesUpdated()){
+        m_view.writeWhite("Update file (y/n): " + file.string());
+        if(controller.yes()){
+            m_view.writeWhite("Use difftool (y/n):");
+            const auto& difftool = controller.yes();
+            if(!difftool){
+                m_view.writeWhite("Then simply overwrite remote with local (y/n)?");
+                if(!controller.yes())
+                    continue;
+            }
+            m_model.updateRemoteFile(file, difftool);
+        }
+    }
+
+    for(const auto& file : m_model.m_monitor.filesAdded()){
+        m_view.writeWhite("Upload file (y/n): " + file.string());
+        if(controller.yes()){
+            m_model.uploadAddedFile(file);
+        }
+    }
+
+    for(const auto& file : m_model.m_monitor.filesRemoved()){
+        const auto& remote = m_model.getRemoteFileEquivalent(file);
+        m_view.writeWhite("Delete remote file (y/n): " + remote.string());
+        if(controller.yes()){
+            m_model.deleteRemoteFile(file);
+        }
+    }
 }
 
 void AppCLIFeatures::pressEnter(AppCLIController& controller)

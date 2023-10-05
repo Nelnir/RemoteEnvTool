@@ -23,6 +23,15 @@ public:
     bool check(const std::filesystem::path& path);
 };
 
+class GitBranchChangesStrategy : public MonitoringStrategy{
+private:
+    std::string m_compareWith;
+public:
+    bool check(const std::filesystem::path& path);
+    std::string getCurrentBranch(const std::filesystem::path& path);
+    void compareWith(const std::string& str) {m_compareWith = str;}
+};
+
 class PathMonitor {
 public:
     PathMonitor(const std::filesystem::path& path = "", std::unique_ptr<MonitoringStrategy> strategy = std::make_unique<GitMonitoringStrategy>());
@@ -38,6 +47,10 @@ public:
     bool check(){
         return m_strategy->check(m_path);
     }
+    void setStrategy(std::unique_ptr<MonitoringStrategy> strategy){
+        m_strategy = std::move(strategy);
+    }
+    std::filesystem::path getPath() const {return m_path;}
 private:
     const std::filesystem::path m_path;
     std::unique_ptr<MonitoringStrategy> m_strategy;

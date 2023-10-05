@@ -180,7 +180,10 @@ bool AppModel::difftool(const std::string& first, const std::string& second)
 
 bool AppModel::listChangedFiles()
 {
-    m_monitor.check();
+    if(!m_monitor.check()){
+        notify("No files changed.");
+        return false;
+    }
 
     const auto& updated = m_monitor.filesUpdated();
     if(!updated.empty())
@@ -207,9 +210,6 @@ bool AppModel::listChangedFiles()
     }
     for(const auto& file : removed){
         notifyBad(file.string());
-    }
-    if(updated.empty() && added.empty() && removed.empty()){
-        notify("No files changed.");
     }
     return true;
 }
