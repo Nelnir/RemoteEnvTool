@@ -85,6 +85,9 @@ void AppCLIFeatures::tlog(AppCLIController& controller)
     if(filename.empty()){
         filename = Utils::getCurrentDateTime() + ".txt";
     }
+
+    m_model.telnet().cdHome();
+
     auto result = m_model.tlog(filename);
     if(result.first){
         m_view.writeWhite("Open downloaded file with notepad++? (y/n)");
@@ -106,7 +109,7 @@ void AppCLIFeatures::script(AppCLIController& controller)
         return;
     }
     if(arg == "$in"){
-        m_model.telnet().executeCommand("cd " + m_model.telnet().home(), false, true);
+        m_model.telnet().cdHome();
         m_view.writeWhite(m_model.telnet().home(), false);
         arg = controller.read();
         if(arg.empty()) return;

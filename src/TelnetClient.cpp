@@ -71,12 +71,12 @@ bool TelnetClient::login(const std::string& username, const std::string& passwor
     registerCallback("Password:", [this, &password](){
         write(password);
     });
-    registerCallback("success", [&authPromise](){
+    registerCallback(">", [&authPromise](){
         authPromise.set_value(true);
     });
 
     if(authFuture.wait_for(std::chrono::seconds(5)) == std::future_status::ready) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(3500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
         return authFuture.get();
     }
     return false;
@@ -153,7 +153,6 @@ bool TelnetClient::executeInitialScript(const std::string& script)
 {
     auto promise = executeCommand(". " + script);
     if(promise.wait_for(std::chrono::seconds(5)) == std::future_status::ready){
-        std::this_thread::sleep_for(std::chrono::seconds(5)); // wait for all beginning data to be sent
         m_home = m_pwd = Utils::getPwd(promise.get());
         return true;
     }
@@ -220,6 +219,14 @@ void TelnetClient::handleReadThread()
             m_accumulatedData.clear();
             keepAliveClock.restart();
         }
+    }
+}
+
+void TelnetClient::cdHome()
+{
+    if(pwd() != home()){
+        executeCommand("cd " + home(), false, true);
+        m_pwd = m_home;
     }
 }
 

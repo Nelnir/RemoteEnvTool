@@ -35,6 +35,7 @@ public:
     bool executeInitialScript(const std::string& script);
     const std::string& home() const {return m_home;}
     const std::string& pwd() const {return m_pwd;}
+    void cdHome();
 private:
     void handleReadThread();
     void handleOption(const uint8_t& command, const uint8_t& option);
