@@ -6,29 +6,16 @@ RemoteEnvTool is a powerful command-line tool designed to monitor local source c
 
 ## Table of Contents
 - [Features](#features)
-- [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
 - [Interactive Mode](#interactive-mode)
+- [Installation](#installation)
 
 ## Features
 - **Source Monitoring:** Real-time detection of local source code modifications via github status parsing.
 - **FTP Integration:** Securely transfer updated source files to remote servers.
 - **Telnet Execution:** Automated Telnet script execution to set up and rebuild environments.
 - **Interactive Mode:** Engaging command-line interface for managing and synchronizing code.
-
-## Installation
-### Dependencies
-- CMake 3.10 or higher
-- [SFML](https://github.com/SFML/SFML)
-
-### Building from Source
-```bash
-git clone https://github.com/username/RemoteEnvTool.git
-cd RemoteEnvTool
-mkdir build && cd build
-cmake ..
-```
 
 ## Configuration
 RemoteEnvTool uses a configuration file to determine various operational parameters:
@@ -45,6 +32,8 @@ For each remote environment you want to manage, define a host configuration:
 - `REMOTE_PATH`: Directory path on the remote server where the code should be transferred.
 - `SCRIPT`: Telnet script that the tool should run after connecting for the first time. ('.' dot will be added)
 - `PORT`: Port on which Telnet service runs, default is 23.
+
+:warning: Paths have to be without any whitespaces.
 
 Configuration file example:
 
@@ -95,5 +84,18 @@ In this mode, you'll be guided through a series of prompts to manage and synchro
 - **Tlog Command**: Start logging output to a designated file or, if no filename is provided, use the current date as the filename.
 - **Script Command**: Execute a specified Telnet script on the remote server.
 - **Transfer Branch Command**: List and transfer all files that have been modified between the current branch and a specified branch.
+
+## Installation
+### Dependencies
+- CMake 3.10 or higher
+- [SFML](https://github.com/SFML/SFML)
+
+### Building from Source
+```bash
+git clone https://github.com/username/RemoteEnvTool.git
+cd RemoteEnvTool
+mkdir build && cd build
+cmake ..
+```
 
 Happy using it, feel free to make any changes :)
