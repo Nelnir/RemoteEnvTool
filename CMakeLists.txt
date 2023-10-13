@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
-project(main VERSION 1.0.0 LANGUAGES CXX)
+project(RemoteEnvTool VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -27,8 +27,8 @@ set(SOURCES
     src/Utils.cpp
 )
 
-add_executable(main ${SOURCES})
-target_link_libraries(main PRIVATE sfml-network sfml-main Boost::program_options)
+add_executable(RemoteEnvTool ${SOURCES})
+target_link_libraries(RemoteEnvTool PRIVATE sfml-network sfml-main Boost::program_options)
 
 option(BUILD_TESTS "Build tests" ON)
 if(BUILD_TESTS)
