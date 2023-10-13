@@ -224,12 +224,13 @@ std::pair<bool, std::string> AppModel::tlog(const std::string& filename)
     }
 
     notify("Starts writing to file, press enter to stop...");
-
-    // assigning to temp in order to prevent destructor calling .get() thus blocking this thread
-    auto temp = m_telnet.executeCommand("tlog > " + filename, true);
+    
+    auto command = "tlog > " + filename;
+    notify(command);
+    m_telnet.executeCommand(command, false, true);
     std::string input;
     std::getline(std::cin, input);
-    m_telnet.executeCommand("\x03");
+    m_telnet.executeCommand("\x03", false, true);
 
     if(!isConnectedToFtp()){
         notify("Connecting via FTP in order to download file...");
