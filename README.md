@@ -92,10 +92,13 @@ In this mode, you'll be guided through a series of prompts to manage and synchro
 
 ### Building from Source
 ```bash
-git clone https://github.com/username/RemoteEnvTool.git
+git clone https://github.com/Nelnir/RemoteEnvTool.git
+git submodule update --init --recursive
 cd RemoteEnvTool
 mkdir build && cd build
 cmake ..
 ```
+
+If some packages are not found, i recommend use of [vcpkg](https://vcpkg.io/en/) to download them :)
 
 Happy using it, feel free to make any changes :)
