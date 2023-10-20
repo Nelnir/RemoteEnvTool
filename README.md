@@ -26,10 +26,11 @@ RemoteEnvTool uses a configuration file to determine various operational paramet
 
 For each remote environment you want to manage, define a host configuration:
 
+- `ALIAS`: Host name alias.
 - `HOST`: Name or IP of the remote server.
 - `USERNAME`: FTP username for accessing the remote server.
 - `PASSWORD`: FTP password for the above username.
-- `REMOTE_PATH`: Directory path on the remote server where the code should be transferred.
+- `REMOTE_PATH`: Directory path on the remote server where the code should be transferred. (can be blank)
 - `SCRIPT`: Telnet script that the tool should run after connecting for the first time. ('.' dot will be added)
 - `PORT`: Port on which Telnet service runs, default is 23.
 
@@ -42,7 +43,8 @@ DEFAULT_HOST: devcoo69
 LOCAL_PATH: C:\User\Desktop\work
 DIFFTOOL: meld
 
-HOST: devcoo69
+ALIAS: devcoo69
+HOST: devcoo5
 USERNAME: username
 PASSWORD: password
 REMOTE_PATH: /home/work
