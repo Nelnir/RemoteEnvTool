@@ -29,6 +29,7 @@ enum class ConfigKey {
  * used throughout the application for one host configuration.
  */
 enum class HostConfig {
+    Alias,          ///< Alias of the host
     HostName,       ///< Name of host which to connect
     RemotePath,     ///< Path to remote sources which will be updated
     Username,       ///< Username to log in to FTP server
@@ -43,15 +44,17 @@ enum class HostConfig {
  * @brief Holds all information regarding connecting to specific host
  */
 struct HostData{
+    std::string m_alias;
     std::string m_hostname;
     std::string m_remotePath;
     std::string m_username;
     std::string m_password;
     std::string m_port;
     std::string m_script;
-    HostData(const std::string& hostname = "", const std::string& remotePath = "", const std::string& username = "",
+    HostData(const std::string& alias = "", const std::string& hostname = "", const std::string& remotePath = "", const std::string& username = "",
              const std::string& password = "", const std::string& port = "", const std::string& script = "") :
-             m_hostname(hostname), m_remotePath(remotePath), m_username(username), m_password(password), m_port(port), m_script(script) {}
+             m_alias(alias), m_hostname(hostname), m_remotePath(remotePath), m_username(username), m_password(password),
+             m_port(port), m_script(script) {}
 };
 
 /**

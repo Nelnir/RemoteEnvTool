@@ -75,7 +75,7 @@ bool TelnetClient::login(const std::string& username, const std::string& passwor
         authPromise.set_value(true);
     });
 
-    if(authFuture.wait_for(std::chrono::seconds(5)) == std::future_status::ready) {
+    if(authFuture.wait_for(std::chrono::seconds(10)) == std::future_status::ready) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         return authFuture.get();
     }
