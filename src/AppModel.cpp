@@ -10,6 +10,9 @@ AppModel::AppModel() : m_monitor(m_configuration.getValue(ConfigKey::LocalPath))
 std::filesystem::path AppModel::getRemoteFileEquivalent(const std::filesystem::path& file)
 {
     auto host = m_configuration.getCurrentHost();
+    if(host.m_remotePath.empty()){
+        return m_telnet.home() + '/' + file.string();
+    }
     std::string remote = m_workingDir + host.m_remotePath + (host.m_remotePath.back() == '/' ? "" : "/") + file.string();
     return remote;
 }
@@ -291,6 +294,11 @@ bool AppModel::transfer(const std::string& arg, const bool& useDifftool)
         if(!connectToFtp(m_configuration.getCurrentHost())){
             return false;
         }
+    }
+
+    if(m_configuration.getCurrentHost().m_remotePath.empty()){
+        notifyBad("This host doesn't support transferring files, please set REMOTE_PATH in config file.");
+        return false;
     }
 
     if(!m_monitor.check()){

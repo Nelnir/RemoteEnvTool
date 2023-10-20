@@ -145,7 +145,7 @@ void AppCLIView::updateBad(const std::string& str)
 
 void AppCLIView::drawMenu()
 {
-    writeGreen("Current host: " + m_model.config().getCurrentHost().m_hostname);
+    writeGreen("Current host: " + m_model.config().getCurrentHost().m_alias);
 
     for(const auto& feature : m_features.getFeatures()){
         std::cout << '[' << feature.first << "] - " << feature.second.first << std::endl;

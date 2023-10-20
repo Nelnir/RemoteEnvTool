@@ -44,7 +44,8 @@ bool Configuration::setHostValue(const std::string& host, const HostConfig& key,
         case HostConfig::RemotePath: itr->second.m_remotePath = value; break;
         case HostConfig::Port: itr->second.m_port = value; break;
         case HostConfig::Script: itr->second.m_script = value; break;
-        case HostConfig::HostName:
+        case HostConfig::HostName: itr->second.m_hostname = value; break;
+        case HostConfig::Alias:
             auto copy = itr->second;
             m_hosts.erase(itr);
             m_hosts.emplace(value, copy);
@@ -73,6 +74,7 @@ std::string Configuration::getHostValue(const std::string& host, const HostConfi
             case HostConfig::HostName: return itr->first;
             case HostConfig::Script: return itr->second.m_script;
             case HostConfig::Port: return itr->second.m_port;
+            case HostConfig::Alias: return itr->second.m_alias;
         }
     }
     return "";
@@ -124,7 +126,7 @@ bool Configuration::readFile()
         if(line.empty()) continue;
         std::istringstream iss(line);
         std::string string_key, value;
-        if (!(iss >> string_key >> value)){
+        if (!(iss >> string_key >> value) && HostConfig::RemotePath != stringToHostKey(string_key)){
             std::cerr << "Malformed line in config: " << line << std::endl;
             continue;
         }
@@ -143,13 +145,13 @@ bool Configuration::readFile()
             // maybe its host config key?
             auto key = stringToHostKey(string_key);
             if(key != HostConfig::None){
-                if(key == HostConfig::HostName){
+                if(key == HostConfig::Alias){
                     current_host_itr = m_hosts.find(value);
                     if(current_host_itr == m_hosts.end()){
                         current_host_itr = m_hosts.insert({value, {value}}).first;
                     }
                 } else if(current_host_itr == m_hosts.end()){
-                    std::cerr << "[HOST] field must come before any other host field!" << std::endl;
+                    std::cerr << "[ALIAS] field must come before any other host field!" << std::endl;
                 } else{
                     switch(key){
                         case HostConfig::Password: current_host_itr->second.m_password = value; break;
@@ -157,6 +159,7 @@ bool Configuration::readFile()
                         case HostConfig::Username: current_host_itr->second.m_username = value; break;
                         case HostConfig::Script: current_host_itr->second.m_script = value; break;
                         case HostConfig::Port: current_host_itr->second.m_port = value; break;
+                        case HostConfig::HostName: current_host_itr->second.m_hostname = value; break;
                     }
                 }
             } else{ // its garbage
@@ -178,7 +181,8 @@ bool Configuration::saveFile()
         file << keyToString(pair.first) << " " << pair.second << '\n';
     file << '\n';
     for(const auto& pair : m_hosts)
-        file << keyToString(HostConfig::HostName) << " " << pair.first << '\n'
+        file << keyToString(HostConfig::Alias) << " " << pair.first << '\n' 
+             << keyToString(HostConfig::HostName) << " " << pair.second.m_hostname << '\n'
              << keyToString(HostConfig::Username) << " " << pair.second.m_username << '\n'
              << keyToString(HostConfig::Password) << " " << pair.second.m_password << '\n'
              << keyToString(HostConfig::RemotePath) << " " << pair.second.m_remotePath << '\n'
@@ -191,17 +195,19 @@ bool Configuration::saveFile()
 
 void Configuration::setDefaultValues()
 {
-    m_configData.insert({ConfigKey::DefaultHost, "devcoo5"});
+    m_configData.insert({ConfigKey::DefaultHost, "example_alias"});
     m_configData.insert({ConfigKey::LocalPath, "C:\\example\\path"});
     m_configData.insert({ConfigKey::Difftool, "C:\\example\\path\\difftool.exe"});
 
     HostData example;
+    example.m_alias = "example_alias";
+    example.m_hostname = "example_host";
     example.m_username = "username";
     example.m_password = "password";
     example.m_remotePath = "appksi\\zrodla_zer\\...";
     example.m_script = "E2_PROD2.sh";
     example.m_port = "23";
-    m_hosts.insert({"devcoo5", example});
+    m_hosts.insert({"example_aliast", example});
 }
 
 std::string Configuration::keyToString(const ConfigKey& key)
@@ -229,6 +235,7 @@ ConfigKey Configuration::stringToKey(const std::string& key)
 std::string Configuration::keyToString(const HostConfig& key)
 {
     static const std::map<HostConfig, std::string> map = {
+    {HostConfig::Alias, "ALIAS:"},
     {HostConfig::HostName, "HOST:"},
     {HostConfig::Password, "PASSWORD:"},
     {HostConfig::Username, "USERNAME:"},
@@ -242,6 +249,7 @@ std::string Configuration::keyToString(const HostConfig& key)
 HostConfig Configuration::stringToHostKey(const std::string& key)
 {
     static const std::map<std::string, HostConfig> map = {
+    {"ALIAS:", HostConfig::Alias},
     {"HOST:", HostConfig::HostName},
     {"PASSWORD:", HostConfig::Password},
     {"USERNAME:", HostConfig::Username},

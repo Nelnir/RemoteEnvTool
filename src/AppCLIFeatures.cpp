@@ -45,7 +45,7 @@ void AppCLIFeatures::changeHost(AppCLIController& controller)
     m_view.writeWhite("Available hosts:");
     const auto& hosts = m_model.config().getHosts();
     for(const auto& host : hosts){
-        if(host == m_model.config().getCurrentHost().m_hostname){
+        if(host == m_model.config().getCurrentHost().m_alias){
             m_view.writeGreen(host);
         } else{
             m_view.writeWhite(host);
@@ -153,6 +153,11 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
         if(!m_model.connectToFtp(m_model.config().getCurrentHost())){
             return;
         }
+    }
+
+    if(m_model.config().getCurrentHost().m_remotePath.empty()){
+        m_view.writeRed("This host doesn't support transferring files, please set REMOTE_PATH in config file.");
+        return;
     }
 
     for(const auto& file : m_model.m_monitor.filesUpdated()){
