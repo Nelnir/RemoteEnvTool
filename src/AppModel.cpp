@@ -111,9 +111,9 @@ bool AppModel::connectToFtp(const HostData& host)
         response = m_ftp.login(host.m_username, host.m_password);
         if(response.isOk()){
             m_workingDir = m_ftp.getWorkingDirectory().getDirectory().string() + "/";
-            notifyGood("Success: connected via FTP to: " + host.m_hostname);
+            notifyGood("Success: connected via FTP to: " + host.m_alias);
         } else{
-            notifyBad("Error: wrong credentials when connecting via ftp to: " + host.m_hostname);
+            notifyBad("Error: wrong credentials when connecting via ftp to: " + host.m_alias);
         }
     }
     return response.isOk();
@@ -121,25 +121,25 @@ bool AppModel::connectToFtp(const HostData& host)
 
 bool AppModel::connectToTelnet(const HostData& host)
 {
-    notify("Connecting to telnet " + host.m_hostname + "...");
+    notify("Connecting to telnet " + host.m_alias + "...");
     auto ip = sf::IpAddress::resolve(host.m_hostname);
     if(!ip.has_value()){
         notifyBad("Error: unable to resolve ip address of telnet: " + host.m_hostname);
         return false;
     }
     if(!m_telnet.connect(ip.value())){
-        notifyBad("Error: unable to connect via telnet to: " + host.m_hostname);
+        notifyBad("Error: unable to connect via telnet to: " + host.m_alias);
         return false;
     }
     if(!m_telnet.login(host.m_username, host.m_password)){
-        notifyBad("Error: wrong credentials when connecting via telnet to: " + host.m_hostname);
+        notifyBad("Error: wrong credentials when connecting via telnet to: " + host.m_alias);
         return false;
     }
     if(!m_telnet.executeInitialScript(host.m_script)){
         notifyBad("Error: when executing initial script: " + host.m_script);
         return false;
     }
-    notifyGood("Success: connected via telnet to: " + host.m_hostname);
+    notifyGood("Success: connected via telnet to: " + host.m_alias);
     return true;
 }
 
