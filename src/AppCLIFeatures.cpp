@@ -68,7 +68,7 @@ void AppCLIFeatures::changeHost(AppCLIController& controller)
 
 void AppCLIFeatures::restart(AppCLIController& controller)
 {
-    m_view.writeWhite("Available options:");
+    m_view.writeWhite("Available options (empty input to exit):");
     m_view.writeWhite("env - restarts whole environment");
     m_view.writeWhite("retux - restarts retux adapter");
     m_view.writeWhite("[serv-name] - restarts single server");
