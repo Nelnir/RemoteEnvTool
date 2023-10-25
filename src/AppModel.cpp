@@ -259,7 +259,6 @@ bool AppModel::restart(const std::string& arg)
         }
     }
 
-    notify("Executing restart: " + arg);
     if(arg == "env"){
         m_telnet.executeCommand("tmshutdown -y", true);
         m_telnet.executeCommand("tmboot -y", true);
@@ -267,9 +266,15 @@ bool AppModel::restart(const std::string& arg)
         m_telnet.executeCommand("cd $APPDIR", true);
         m_telnet.executeCommand("./RetuxAdapter.sh stop", true);
         m_telnet.executeCommand("./RetuxAdapter.sh start", true);
+    } else if (tolower(arg.front()) == 's' && arg[1] == '-'){
+        m_telnet.executeCommand("tmshutdown -s " + arg.substr(2), true);
+        m_telnet.executeCommand("tmboot -s " + arg.substr(2), true);
+    } else if(tolower(arg.front()) == 'g' && arg[1] == '-'){
+        m_telnet.executeCommand("tmshutdown -g " + arg.substr(2), true);
+        m_telnet.executeCommand("tmboot -g " + arg.substr(2), true);
     } else{
-        m_telnet.executeCommand("tmshutdown -s " + arg, true);
-        m_telnet.executeCommand("tmboot -s " + arg, true);
+        notifyBad("Unknown argument: " + arg);
+        return false;
     }
     return true;
 }

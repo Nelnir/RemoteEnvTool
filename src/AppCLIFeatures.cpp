@@ -71,7 +71,8 @@ void AppCLIFeatures::restart(AppCLIController& controller)
     m_view.writeWhite("Available options (empty input to exit):");
     m_view.writeWhite("env - restarts whole environment");
     m_view.writeWhite("retux - restarts retux adapter");
-    m_view.writeWhite("[serv-name] - restarts single server");
+    m_view.writeWhite("S-[serv-name] - restarts single server");
+    m_view.writeWhite("G-[group-name] - restarts group of servers");
     std::string arg = controller.read();
     if(arg.empty()){
         pressEnter(controller);
