@@ -4,6 +4,7 @@
 #include <iostream>
 #include "Utils.hpp"
 #include "Windows.h"
+#include <conio.h>
 
 AppCLIFeatures::AppCLIFeatures(AppModel& model, AppCLIView& view) : m_model(model), m_view(view)
 {
@@ -104,21 +105,43 @@ void AppCLIFeatures::tlog(AppCLIController& controller)
 
 void AppCLIFeatures::script(AppCLIController& controller)
 {
-    m_view.writeWhite("Executing script ($in to go to base path)");
-    auto text = m_model.telnet().pwd();
-    m_view.writeWhite(text, false);
-    std::string arg = controller.read();
-    if(arg.empty()){
-        pressEnter(controller);
-        return;
+    if(!m_model.m_telnet.isConnected()){
+        if(!m_model.connectToTelnet(m_model.config().getCurrentHost())){
+            return;
+        }
     }
-    if(arg == "$in"){
-        m_model.telnet().cdHome();
-        m_view.writeWhite(m_model.telnet().home(), false);
-        arg = controller.read();
-        if(arg.empty()) return;
+
+    m_view.writeWhite("Continuous script execution\n@in to go to base path\n@exit to exit to main menu");
+    m_view.writeWhite(m_model.telnet().pwd() + ">", false);
+    m_model.telnet().showThreadOutput(true);
+    std::string command;
+    while(true){
+        if (_kbhit()){
+            char ch = _getch();
+            command += ch;
+            if(ch == 13){ // enter
+                if(command.find("@in") != std::string::npos){
+                    m_model.telnet().showThreadOutput(false);
+                    m_model.telnet().send("\b\b\b");
+                    m_model.telnet().cdHome();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                    m_model.telnet().showThreadOutput(true);
+                    m_view.writeWhite("\n" + m_model.telnet().home() + '>', false);
+                    command.clear();
+                    continue;
+                } else if(command.find("@exit") != std::string::npos){
+                    m_model.telnet().send("\b\b\b\b\b");
+                    m_view.writeWhite("");
+                    break;
+                }
+                command.clear();
+            }
+            m_model.telnet().send(std::string(1, ch));
+        } else{
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
     }
-    m_model.script(arg);
+    m_model.telnet().showThreadOutput(false);
     pressEnter(controller);
 }
 

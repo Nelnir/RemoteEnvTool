@@ -1,6 +1,7 @@
 #include "AppCLIController.hpp"
 #include <iostream>
 #include <cctype>
+#include <conio.h>
 
 AppCLIController::AppCLIController(AppModel& model) : m_model(model)
 {
@@ -20,10 +21,12 @@ bool AppCLIController::yes()
     return tolower(ret.front()) == 'y';
 }
 
-std::string AppCLIController::read()
+std::string AppCLIController::read(const bool& showMark)
 {
     std::string input;
-    std::cout << '>';
+    if(showMark){
+        std::cout << '>';
+    }
     std::getline(std::cin, input);
     return input;
 }

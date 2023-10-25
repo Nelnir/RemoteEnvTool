@@ -20,12 +20,15 @@ class TelnetClient{
     std::string m_pwd;
     std::string m_source;
     sf::Clock keepAliveClock;
+    bool m_showThreadOutput;
 public:
     TelnetClient();
     ~TelnetClient();
     bool connect(const sf::IpAddress& ip, const uint16_t& port = 23);
     bool login(const std::string& username, const std::string& password);
-    std::future<std::string> executeCommand(const std::string& command, const bool& showResult = false, const bool& exitImmediately = false);
+    std::future<std::string> executeCommand(const std::string& command, const bool& showResult = false, const bool& exitImmediately = false, const bool& outputNewLine = true);
+    void showThreadOutput(const bool& val);
+    bool send(const std::string& str);
     bool write(const uint8_t*, const size_t& size);
     bool write(const std::string& text);
     bool isConnected() const;
