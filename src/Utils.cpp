@@ -24,4 +24,14 @@ std::string getPwd(const std::string& data)
     return str;
 }
 
+std::string getSource(const std::string& data)
+{
+    const std::string key = "zrodla: ";
+    auto key_index = data.find(key);
+    if(key_index == std::string::npos) return "";
+    auto end_index = data.find('\r', key_index);
+    if(end_index == std::string::npos) return "";
+    return data.substr(key_index + key.length(), end_index - key_index - key.length());
+}
+
 }

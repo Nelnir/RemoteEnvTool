@@ -7,13 +7,28 @@ AppModel::AppModel() : m_monitor(m_configuration.getValue(ConfigKey::LocalPath))
 
 }
 
+bool AppModel::changeFTPDirectory(const std::filesystem::path& path)
+{
+    for(const auto& component : path){
+        if(!m_ftp.changeDirectory(component.string()).isOk()){
+            notifyBad("Error: changing directory to " + component.string() + " of " + path.string());
+            return false;
+        }
+    }
+    return true;
+}
+
 std::filesystem::path AppModel::getRemoteFileEquivalent(const std::filesystem::path& file)
 {
+    std::string remote;
     auto host = m_configuration.getCurrentHost();
     if(host.m_remotePath.empty()){
-        return m_telnet.home() + '/' + file.string();
+        remote = m_telnet.source() + '/' + file.string();
+    } else if (!host.m_remotePath.empty()){
+        remote = host.m_remotePath + (host.m_remotePath.back() == '/' ? "" : "/") + file.string();
+    } else{
+        notifyBad("Error: no remote file eq");
     }
-    std::string remote = m_workingDir + host.m_remotePath + (host.m_remotePath.back() == '/' ? "" : "/") + file.string();
     return remote;
 }
 
@@ -22,7 +37,7 @@ std::pair<bool, std::string> AppModel::uploadAddedFile(const std::filesystem::pa
     auto local_file = m_configuration.getValue(ConfigKey::LocalPath) + file.string();
     std::pair<bool, std::string> ret;
     const auto& remote = getRemoteFileEquivalent(file.string());
-    if(m_ftp.changeDirectory(remote.parent_path().string()).isOk()){
+    if(changeFTPDirectory(remote.parent_path())){
         ret.first = m_ftp.upload(local_file, "", sf::Ftp::TransferMode::Ascii).isOk();
         if(ret.first && !suppressOutput){
             notifyGood("Success: file uploaded " + local_file);
@@ -38,8 +53,9 @@ std::pair<bool, std::string> AppModel::updateRemoteFile(const std::filesystem::p
 {
     auto local_file = m_configuration.getValue(ConfigKey::LocalPath) + file.string();
     auto remote = getRemoteFileEquivalent(file);
-    auto& result = downloadRemoteFile(file, true);
+    auto result = downloadRemoteFile(file.string(), true);
     if(!result.first){
+        notifyBad("Error: when retrieving remote file: " + remote.string());
         return std::make_pair(false, result.second);
     }
     std::string fileToUpload;
@@ -70,7 +86,7 @@ std::pair<bool, std::string> AppModel::deleteRemoteFile(const std::filesystem::p
 {
     std::pair<bool, std::string> ret;
     const auto& remote = getRemoteFileEquivalent(file.string());
-    if(m_ftp.changeDirectory(remote.parent_path().string()).isOk()){
+    if(changeFTPDirectory(remote.parent_path())){
         ret.first = m_ftp.deleteFile(remote).isOk();
         if(ret.first){
             if(!suppressOutput){
@@ -151,8 +167,8 @@ bool AppModel::isConnectedToFtp()
 std::pair<bool, std::string> AppModel::downloadRemoteFile(const std::filesystem::path& file, const bool& suppressOutput)
 {
     std::pair<bool, std::string> ret;
-    const auto& remote = getRemoteFileEquivalent(file.string());
-    if(m_ftp.changeDirectory(remote.parent_path().string()).isOk()){
+    auto remote = getRemoteFileEquivalent(file.string());
+    if(changeFTPDirectory(remote.parent_path())){
         if(!std::filesystem::exists("temp/")){
             std::filesystem::create_directory("temp/");
         }
@@ -165,8 +181,6 @@ std::pair<bool, std::string> AppModel::downloadRemoteFile(const std::filesystem:
         } else if(!suppressOutput){
             notifyBad("Error: when downloading file " + file.string());
         }
-    } else{
-        notifyBad("Error: when changing directory to " + remote.parent_path().string());
     }
     return ret;
 }
@@ -295,15 +309,26 @@ bool AppModel::script(const std::string& script)
 
 bool AppModel::transfer(const std::string& arg, const bool& useDifftool)
 {
+    auto host = m_configuration.getCurrentHost();
     if(!isConnectedToFtp()){
-        if(!connectToFtp(m_configuration.getCurrentHost())){
+        if(!connectToFtp(host)){
             return false;
         }
     }
 
-    if(m_configuration.getCurrentHost().m_remotePath.empty()){
-        notifyBad("This host doesn't support transferring files, please set REMOTE_PATH in config file.");
-        return false;
+    if(host.m_remotePath.empty() && m_telnet.source().empty()){
+        notify("[REMOTE_PATH] is not set, retrieving source path from telnet...");
+        if(!m_telnet.isConnected()){
+            if(!connectToTelnet(host)){
+                return false;
+            }
+        }
+        if(m_telnet.source().empty()){
+            notifyBad("This host doesn't support transferring files, please set REMOTE_PATH in config file.");
+            return false;
+        } else{
+            notifyGood("Found path: " + m_telnet.source());
+        }
     }
 
     if(!m_monitor.check()){

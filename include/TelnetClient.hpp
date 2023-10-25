@@ -18,6 +18,7 @@ class TelnetClient{
     std::string m_accumulatedData;
     std::string m_home;
     std::string m_pwd;
+    std::string m_source;
     sf::Clock keepAliveClock;
 public:
     TelnetClient();
@@ -35,6 +36,7 @@ public:
     bool executeInitialScript(const std::string& script);
     const std::string& home() const {return m_home;}
     const std::string& pwd() const {return m_pwd;}
+    const std::string& source() const {return m_source;}
     void cdHome();
 private:
     void handleReadThread();

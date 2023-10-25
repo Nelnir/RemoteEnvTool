@@ -152,16 +152,28 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
         return;
     }
 
+    auto host = m_model.config().getCurrentHost();
+
     if(!m_model.isConnectedToFtp()){
         m_view.writeWhite("Connecting to ftp server...");
-        if(!m_model.connectToFtp(m_model.config().getCurrentHost())){
+        if(!m_model.connectToFtp(host)){
             return;
         }
     }
 
-    if(m_model.config().getCurrentHost().m_remotePath.empty()){
-        m_view.writeRed("This host doesn't support transferring files, please set REMOTE_PATH in config file.");
-        return;
+    if(host.m_remotePath.empty() && m_model.m_telnet.source().empty()){
+        m_view.writeWhite("[REMOTE_PATH] is not set, retrieving source path from telnet...");
+        if(!m_model.m_telnet.isConnected()){
+            if(!m_model.connectToTelnet(host)){
+                return;
+            }
+        }
+        if(m_model.m_telnet.source().empty()){
+            m_view.writeRed("This host doesn't support transferring files, please set REMOTE_PATH in config file.");
+            return;
+        } else{
+            m_view.writeGreen("Found path: " + m_model.m_telnet.source());
+        }
     }
 
     for(const auto& file : m_model.m_monitor.filesUpdated()){

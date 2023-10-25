@@ -120,6 +120,9 @@ std::future<std::string> TelnetClient::executeCommand(const std::string& command
                 // idk why is that, but the latter condition prevents early leaving
                 if (chunk.find('>') != std::string::npos && chunk.find('<') == std::string::npos) {
                     m_pwd = Utils::getPwd(data);
+                    if(m_source.empty()){
+                        m_source = Utils::getSource(data);
+                    }
                     break;
                 } // if we find string making target then we are building, increase exit time to 1 minute (set building to true)
                 else if(chunk.find("making target")){

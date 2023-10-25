@@ -25,14 +25,14 @@ opt("Allowed options"), m_features(model, *this)
 
 int AppCLIView::show(AppCLIController& controller)
 {
-    //std::vector<std::string> simulated_args = {"--transfer", "all"};
+   // std::vector<std::string> simulated_args = {"--t",};
     try{
         po::variables_map vm;
         //po::store(po::command_line_parser(simulated_args).options(opt).run(), vm);
         po::store(po::parse_command_line(argc, argv, opt), vm);
         po::notify(vm);    
 
-        if (vm.count("help") || argc == 1){
+        if (vm.count("help") /*|| argc == 1*/){
             writeHelp();
             return 0;
         }
