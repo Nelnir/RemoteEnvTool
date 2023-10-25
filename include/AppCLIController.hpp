@@ -8,7 +8,7 @@ public:
     AppCLIController(AppModel& model);
     int readMainMenuStep();
     bool yes();
-    std::string read();
+    std::string read(const bool& showMark = false);
 private:
     int asNumber(const std::string& input);
     AppModel& m_model;

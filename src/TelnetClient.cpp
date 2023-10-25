@@ -11,7 +11,7 @@ private:
     std::atomic<bool>& m_blockReadingFlag;
 };
 
-TelnetClient::TelnetClient()
+TelnetClient::TelnetClient() : m_showThreadOutput(false)
 {
 
 }
@@ -82,12 +82,22 @@ bool TelnetClient::login(const std::string& username, const std::string& passwor
     return false;
 }
 
-std::future<std::string> TelnetClient::executeCommand(const std::string& command, const bool& showResult, const bool& exitImmediately)
+void TelnetClient::showThreadOutput(const bool& val)
+{
+    m_showThreadOutput = val;
+}
+
+bool TelnetClient::send(const std::string& str)
+{
+    return m_socket.send(str.c_str(), str.length()) == sf::Socket::Status::Done;
+}
+
+std::future<std::string> TelnetClient::executeCommand(const std::string& command, const bool& showResult, const bool& exitImmediately, const bool& showNewLine)
 {
     keepAliveClock.restart();
-    return std::async(std::launch::async, [this, command, showResult, exitImmediately]() {
+    return std::async(std::launch::async, [this, command, showResult, exitImmediately, showNewLine]() {
         BlockReadingGuard guard(m_blockReading);
-        std::string fullCommand = command + "\n";
+        std::string fullCommand = command + "\n";;
         std::string data;
 
         if(!isConnected()){
@@ -120,6 +130,9 @@ std::future<std::string> TelnetClient::executeCommand(const std::string& command
                 // idk why is that, but the latter condition prevents early leaving
                 if (chunk.find('>') != std::string::npos && chunk.find('<') == std::string::npos) {
                     m_pwd = Utils::getPwd(data);
+                    if(m_source.empty()){
+                        m_source = Utils::getSource(data);
+                    }
                     break;
                 } // if we find string making target then we are building, increase exit time to 1 minute (set building to true)
                 else if(chunk.find("making target")){
@@ -141,7 +154,7 @@ std::future<std::string> TelnetClient::executeCommand(const std::string& command
                 throw std::runtime_error("Receive failed");
             }
         }
-        if(showResult){
+        if(showResult && showNewLine){
             std::cout << std::endl;
         }
         m_socket.setBlocking(true);
@@ -166,8 +179,8 @@ void TelnetClient::handleReadThread()
     
     keepAliveClock.restart();
     while (m_keepReading) {
-        if (selector.wait(sf::milliseconds(250))) {
-            if (selector.isReady(m_socket) && !m_blockReading) {
+        if (selector.wait(sf::milliseconds(100))) {
+            if (!m_blockReading && selector.isReady(m_socket)) {
                 std::size_t received;
                 auto status = m_socket.receive(m_buffer, sizeof(m_buffer), received);
                 if (status == sf::Socket::Status::Done) {
@@ -175,7 +188,7 @@ void TelnetClient::handleReadThread()
 
                     // handle commands
                     for (std::size_t i = 0; i < received; ++i) {
-                        if (m_buffer[i] == 255) {
+                        if (m_buffer[i] == 255 && m_home.empty()) {
                             if (i + 1 < received && m_buffer[i + 1] == 255) {
                                 // This is an escaped 255 byte, so treat it as regular data.
                                 textStream << m_buffer[i];
@@ -191,11 +204,15 @@ void TelnetClient::handleReadThread()
 
 
                     std::string filteredStr = textStream.str();
-                    if (!filteredStr.empty()) {
-                        //std::cout << filteredStr << std::endl;
+                    if (!filteredStr.empty() && m_showThreadOutput) {
+                        std::cout << filteredStr;
                     }
-
                     m_accumulatedData += filteredStr;
+
+                    if (m_accumulatedData.find('>') != std::string::npos && m_showThreadOutput) {
+                        m_pwd = Utils::getPwd(m_accumulatedData);
+                        m_accumulatedData.clear();
+                    }
 
                     for(auto itr = m_callbacks.begin(); itr != m_callbacks.end(); ++itr){
                         auto callback = *itr;

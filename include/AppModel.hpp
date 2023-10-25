@@ -49,11 +49,20 @@ public:
     bool transfer(const std::string& arg, const bool& useDifftool);
 
 private:
+    bool changeFTPDirectory(const std::filesystem::path& path);
     bool transferFile(const std::filesystem::path& file, const std::filesystem::path& to, const bool& suppressOutput = false);
     std::filesystem::path getRemoteFileEquivalent(const std::filesystem::path& file);
     std::pair<bool, std::string> uploadAddedFile(const std::filesystem::path& file, const bool& suppressOutput = false);
     std::pair<bool, std::string> updateRemoteFile(const std::filesystem::path& file, const bool& useDifftool, const bool& suppressOutput = false);
     std::pair<bool, std::string> deleteRemoteFile(const std::filesystem::path& file, const bool& suppressOutput = false);
+    /**
+     * @brief Downloads remote file
+     * 
+     * @param file Filepath to local file
+     * @param suppressOutput If set to true, no output will be produces
+     * 
+     * @return First value is true if succedeed, and second one is path where that file was downloaded
+     */
     std::pair<bool, std::string> downloadRemoteFile(const std::filesystem::path& file, const bool& suppressOutput = false);
 
     bool difftool(const std::string& first, const std::string& second);

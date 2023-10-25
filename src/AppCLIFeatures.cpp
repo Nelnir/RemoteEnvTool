@@ -4,6 +4,7 @@
 #include <iostream>
 #include "Utils.hpp"
 #include "Windows.h"
+#include <conio.h>
 
 AppCLIFeatures::AppCLIFeatures(AppModel& model, AppCLIView& view) : m_model(model), m_view(view)
 {
@@ -68,12 +69,16 @@ void AppCLIFeatures::changeHost(AppCLIController& controller)
 
 void AppCLIFeatures::restart(AppCLIController& controller)
 {
-    m_view.writeWhite("Available options:");
+    m_view.writeWhite("Available options (empty input to exit):");
     m_view.writeWhite("env - restarts whole environment");
     m_view.writeWhite("retux - restarts retux adapter");
-    m_view.writeWhite("[serv-name] - restarts single server");
+    m_view.writeWhite("S-[serv-name] - restarts single server");
+    m_view.writeWhite("G-[group-name] - restarts group of servers");
     std::string arg = controller.read();
-    if(arg.empty()) return;
+    if(arg.empty()){
+        pressEnter(controller);
+        return;
+    }
     m_model.restart(arg);
     pressEnter(controller);
 }
@@ -100,21 +105,43 @@ void AppCLIFeatures::tlog(AppCLIController& controller)
 
 void AppCLIFeatures::script(AppCLIController& controller)
 {
-    m_view.writeWhite("Executing script ($in to go to base path)");
-    auto text = m_model.telnet().pwd();
-    m_view.writeWhite(text, false);
-    std::string arg = controller.read();
-    if(arg.empty()){
-        pressEnter(controller);
-        return;
+    if(!m_model.m_telnet.isConnected()){
+        if(!m_model.connectToTelnet(m_model.config().getCurrentHost())){
+            return;
+        }
     }
-    if(arg == "$in"){
-        m_model.telnet().cdHome();
-        m_view.writeWhite(m_model.telnet().home(), false);
-        arg = controller.read();
-        if(arg.empty()) return;
+
+    m_view.writeWhite("Continuous script execution\n@in to go to base path\n@exit to exit to main menu");
+    m_view.writeWhite(m_model.telnet().pwd() + ">", false);
+    m_model.telnet().showThreadOutput(true);
+    std::string command;
+    while(true){
+        if (_kbhit()){
+            char ch = _getch();
+            command += ch;
+            if(ch == 13){ // enter
+                if(command.find("@in") != std::string::npos){
+                    m_model.telnet().showThreadOutput(false);
+                    m_model.telnet().send("\b\b\b");
+                    m_model.telnet().cdHome();
+                    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                    m_model.telnet().showThreadOutput(true);
+                    m_view.writeWhite("\n" + m_model.telnet().home() + '>', false);
+                    command.clear();
+                    continue;
+                } else if(command.find("@exit") != std::string::npos){
+                    m_model.telnet().send("\b\b\b\b\b");
+                    m_view.writeWhite("");
+                    break;
+                }
+                command.clear();
+            }
+            m_model.telnet().send(std::string(1, ch));
+        } else{
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        }
     }
-    m_model.script(arg);
+    m_model.telnet().showThreadOutput(false);
     pressEnter(controller);
 }
 
@@ -148,16 +175,28 @@ void AppCLIFeatures::transferFiles(AppCLIController& controller)
         return;
     }
 
+    auto host = m_model.config().getCurrentHost();
+
     if(!m_model.isConnectedToFtp()){
         m_view.writeWhite("Connecting to ftp server...");
-        if(!m_model.connectToFtp(m_model.config().getCurrentHost())){
+        if(!m_model.connectToFtp(host)){
             return;
         }
     }
 
-    if(m_model.config().getCurrentHost().m_remotePath.empty()){
-        m_view.writeRed("This host doesn't support transferring files, please set REMOTE_PATH in config file.");
-        return;
+    if(host.m_remotePath.empty() && m_model.m_telnet.source().empty()){
+        m_view.writeWhite("[REMOTE_PATH] is not set, retrieving source path from telnet...");
+        if(!m_model.m_telnet.isConnected()){
+            if(!m_model.connectToTelnet(host)){
+                return;
+            }
+        }
+        if(m_model.m_telnet.source().empty()){
+            m_view.writeRed("This host doesn't support transferring files, please set REMOTE_PATH in config file.");
+            return;
+        } else{
+            m_view.writeGreen("Found path: " + m_model.m_telnet.source());
+        }
     }
 
     for(const auto& file : m_model.m_monitor.filesUpdated()){

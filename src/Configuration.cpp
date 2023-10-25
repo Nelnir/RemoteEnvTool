@@ -198,6 +198,7 @@ void Configuration::setDefaultValues()
     m_configData.insert({ConfigKey::DefaultHost, "example_alias"});
     m_configData.insert({ConfigKey::LocalPath, "C:\\example\\path"});
     m_configData.insert({ConfigKey::Difftool, "C:\\example\\path\\difftool.exe"});
+    m_configData.insert({ConfigKey::DifftoolSide, "LEFT"});
 
     HostData example;
     example.m_alias = "example_alias";
@@ -215,6 +216,7 @@ std::string Configuration::keyToString(const ConfigKey& key)
     static const std::map<ConfigKey, std::string> map = {
     {ConfigKey::DefaultHost, "DEFAULT_HOST:"},
     {ConfigKey::LocalPath, "LOCAL_PATH:"},
+    {ConfigKey::DifftoolSide, "DIFFTOOL_SIDE:"},
     {ConfigKey::Difftool, "DIFFTOOL:"}};
     auto itr = map.find(key);
     return itr->second;
@@ -225,6 +227,7 @@ ConfigKey Configuration::stringToKey(const std::string& key)
     static const std::map<std::string, ConfigKey> map = {
     {"DEFAULT_HOST:", ConfigKey::DefaultHost},
     {"LOCAL_PATH:", ConfigKey::LocalPath},
+    {"DIFFTOOL_SIDE:", ConfigKey::DifftoolSide},
     {"DIFFTOOL:", ConfigKey::Difftool}};
     auto itr = map.find(key);
     if(itr != map.end())

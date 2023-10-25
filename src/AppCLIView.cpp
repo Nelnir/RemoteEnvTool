@@ -13,7 +13,7 @@ opt("Allowed options"), m_features(model, *this)
     ("transfer", po::value<std::string>(), "send files to remote host\narg values: added, deleted, updated, all")
     ("transfer-branch", po::value<std::string>(), "lists and sends all files modified between current branch and selected branch\narg values: branch to compare with")
     ("script", po::value<std::string>(), "execute telnet script\narg values: script name to be executed (. dot will be added on beginning)")
-    ("restart", po::value<std::string>(), "restarts specified object\narg values: env (whole domain), retux (adapter), SERV-NAME (single server)")
+    ("restart", po::value<std::string>(), "restarts specified object\narg values: env (whole domain), retux (adapter), s-[SERV-NAME] (single server), g-[GROUP-NAME]")
     ("tlog", po::value<std::string>()->implicit_value(""), "starts writing log to a file\narg values: filename which to save (if no value is passed, current date will be used)")
     ("no-difftool", "transfering files involves firstly comparing them via difftool, if that option is passed, difftool wont be used")
     ;
@@ -25,14 +25,14 @@ opt("Allowed options"), m_features(model, *this)
 
 int AppCLIView::show(AppCLIController& controller)
 {
-    //std::vector<std::string> simulated_args = {"--transfer", "all"};
+   // std::vector<std::string> simulated_args = {"--t",};
     try{
         po::variables_map vm;
         //po::store(po::command_line_parser(simulated_args).options(opt).run(), vm);
         po::store(po::parse_command_line(argc, argv, opt), vm);
         po::notify(vm);    
 
-        if (vm.count("help") || argc == 1){
+        if (vm.count("help") /*|| argc == 1*/){
             writeHelp();
             return 0;
         }
