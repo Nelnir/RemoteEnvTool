@@ -23,6 +23,7 @@ RemoteEnvTool uses a configuration file to determine various operational paramet
 - `DEFAULT_HOST`: Specifies the default host the tool should connect to if no host is provided in command arguments.
 - `LOCAL_PATH`: Defines the path on your local machine where the source code resides.
 - `DIFFTOOL`: Specifies the tool to be used for showing differences in code.
+- `DIFFTOOL_SIDE`: Specifies if edited file is on the left or right side (values: LEFT or RIGHT)
 
 For each remote environment you want to manage, define a host configuration:
 
@@ -84,7 +85,7 @@ In this mode, you'll be guided through a series of prompts to manage and synchro
 - **Change Default Host**: Modify the default host as set in your configuration.
 - **Restart Command**: Restart a specific target, such as the entire environment, a particular adapter, or a designated server.
 - **Tlog Command**: Start logging output to a designated file or, if no filename is provided, use the current date as the filename.
-- **Script Command**: Execute a specified Telnet script on the remote server.
+- **Script Command**: Execute a continuous telnet session on the remote server.
 - **Transfer Branch Command**: List and transfer all files that have been modified between the current branch and a specified branch.
 
 ## Installation
