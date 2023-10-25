@@ -18,6 +18,7 @@ enum class ConfigKey {
     DefaultHost,     ///< Default Host
     LocalPath,       ///< Path to local sources which will be monitored for changes
     Difftool,        ///< Path to difftool used for comparing file differences
+    DifftoolSide,    ///< Specify file which needs to be edited, LEFT or RIGHT (default is LEFT)
     None
 };
 

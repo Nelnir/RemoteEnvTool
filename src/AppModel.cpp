@@ -62,7 +62,11 @@ std::pair<bool, std::string> AppModel::updateRemoteFile(const std::filesystem::p
     if(useDifftool){
         // force file change
         if(!difftool(result.second, local_file)){
-            notifyBad("Error: left file must be edited");
+            if(m_configuration.getValue(ConfigKey::DifftoolSide) == "RIGHT"){
+                notifyBad("Error: right file must be edited");
+            } else{
+                notifyBad("Error: left file must be edited");
+            }
             std::filesystem::remove(result.second);
             return std::make_pair(false, remote.string());
         }
@@ -188,7 +192,12 @@ std::pair<bool, std::string> AppModel::downloadRemoteFile(const std::filesystem:
 bool AppModel::difftool(const std::string& first, const std::string& second)
 {
     const auto& last_modified = std::filesystem::last_write_time(first);
-    std::string diffCommand = m_configuration.getValue(ConfigKey::Difftool) + " " + first + " " + second;
+    std::string diffCommand = m_configuration.getValue(ConfigKey::Difftool) + " ";
+    if(m_configuration.getValue(ConfigKey::DifftoolSide) == "RIGHT"){
+        diffCommand += second + " " + first;
+    } else{
+        diffCommand += first + " " + second;
+    }
 #ifdef _WIN32
     system(diffCommand.c_str());
 #endif
