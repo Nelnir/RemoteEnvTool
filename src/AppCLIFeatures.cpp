@@ -73,7 +73,10 @@ void AppCLIFeatures::restart(AppCLIController& controller)
     m_view.writeWhite("retux - restarts retux adapter");
     m_view.writeWhite("[serv-name] - restarts single server");
     std::string arg = controller.read();
-    if(arg.empty()) return;
+    if(arg.empty()){
+        pressEnter(controller);
+        return;
+    }
     m_model.restart(arg);
     pressEnter(controller);
 }
