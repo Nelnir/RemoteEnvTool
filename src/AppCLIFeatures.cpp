@@ -238,7 +238,13 @@ void AppCLIFeatures::pressEnter(AppCLIController& controller)
 
 void AppCLIFeatures::help(AppCLIController& controller)
 {
-    m_view.writeWhite("The left file must be modified in order to update the remote file via FTP.");
+    std::string side;
+    if(m_model.m_configuration.getValue(ConfigKey::DifftoolSide) == "RIGHT"){
+        side = "right";
+    } else{
+        side = "left";
+    }
+    m_view.writeWhite("The " + side + " file must be modified in order to update the remote file via FTP.");
     m_view.writeWhite("To add new host, see file config.txt and update accordingly.");
     m_view.writeHelp();
     pressEnter(controller);
