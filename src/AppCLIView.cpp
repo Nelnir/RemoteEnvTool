@@ -32,7 +32,7 @@ int AppCLIView::show(AppCLIController& controller)
         po::store(po::parse_command_line(argc, argv, opt), vm);
         po::notify(vm);    
 
-        if (vm.count("help") /*|| argc == 1*/){
+        if (vm.count("help") || argc == 1){
             writeHelp();
             return 0;
         }

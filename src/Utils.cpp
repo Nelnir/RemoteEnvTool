@@ -34,4 +34,13 @@ std::string getSource(const std::string& data)
     return data.substr(key_index + key.length(), end_index - key_index - key.length());
 }
 
+#include <windows.h>
+std::string getExecutablePath()
+{
+    char buffer[MAX_PATH];
+    GetModuleFileName(NULL, buffer, MAX_PATH);
+    std::string path(buffer);
+    return path.substr(0, path.find_last_of("\\/"));
+}
+
 }

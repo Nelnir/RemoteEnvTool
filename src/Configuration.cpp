@@ -195,6 +195,7 @@ bool Configuration::saveFile()
 
 void Configuration::setDefaultValues()
 {
+    m_save = true;
     m_configData.insert({ConfigKey::DefaultHost, "example_alias"});
     m_configData.insert({ConfigKey::LocalPath, "C:\\example\\path"});
     m_configData.insert({ConfigKey::Difftool, "C:\\example\\path\\difftool.exe"});
@@ -208,7 +209,7 @@ void Configuration::setDefaultValues()
     example.m_remotePath = "appksi\\zrodla_zer\\...";
     example.m_script = "E2_PROD2.sh";
     example.m_port = "23";
-    m_hosts.insert({"example_aliast", example});
+    m_hosts.insert({"example_alias", example});
 }
 
 std::string Configuration::keyToString(const ConfigKey& key)

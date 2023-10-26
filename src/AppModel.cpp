@@ -1,8 +1,9 @@
 #include "AppModel.hpp"
 #include <boost/algorithm/string/replace.hpp>
 #include <iostream>
+#include "Utils.hpp"
 
-AppModel::AppModel() : m_monitor(m_configuration.getValue(ConfigKey::LocalPath))
+AppModel::AppModel() : m_configuration(Utils::getExecutablePath() + "/config.txt"), m_monitor(m_configuration.getValue(ConfigKey::LocalPath))
 {
 
 }
@@ -89,7 +90,12 @@ std::pair<bool, std::string> AppModel::updateRemoteFile(const std::filesystem::p
 std::pair<bool, std::string> AppModel::deleteRemoteFile(const std::filesystem::path& file, const bool& suppressOutput)
 {
     std::pair<bool, std::string> ret;
-    const auto& remote = getRemoteFileEquivalent(file.string());
+    std::filesystem::path remote;
+    if(file.string().front() == '/'){
+        remote = file;
+    } else{
+        remote = getRemoteFileEquivalent(file.string());
+    }
     if(changeFTPDirectory(remote.parent_path())){
         ret.first = m_ftp.deleteFile(remote).isOk();
         if(ret.first){
@@ -171,14 +177,20 @@ bool AppModel::isConnectedToFtp()
 std::pair<bool, std::string> AppModel::downloadRemoteFile(const std::filesystem::path& file, const bool& suppressOutput)
 {
     std::pair<bool, std::string> ret;
-    auto remote = getRemoteFileEquivalent(file.string());
+    std::filesystem::path remote;
+    if(file.string().front() == '/'){
+        remote = file;
+    } else{
+        remote = getRemoteFileEquivalent(file.string());
+    }
     if(changeFTPDirectory(remote.parent_path())){
-        if(!std::filesystem::exists("temp/")){
-            std::filesystem::create_directory("temp/");
+        const std::string down_path = Utils::getExecutablePath() + "/temp/";
+        if(!std::filesystem::exists(down_path)){
+            std::filesystem::create_directory(down_path);
         }
-        ret.first = m_ftp.download(remote, "temp/", sf::Ftp::TransferMode::Ascii).isOk();
+        ret.first = m_ftp.download(remote, down_path, sf::Ftp::TransferMode::Ascii).isOk();
         if(ret.first){
-            ret.second = "temp/" + remote.filename().string();
+            ret.second = down_path + remote.filename().string();
             if(!suppressOutput){
                 notifyGood("Success: downloaded file to " + ret.second);
             }
@@ -251,6 +263,8 @@ std::pair<bool, std::string> AppModel::tlog(const std::string& filename)
 
     notify("Starts writing to file, press enter to stop...");
     
+    m_telnet.executeCommand("cd $APPDIR/../log", true, false, false);
+
     auto command = "tlog > " + filename;
     notify(command);
     m_telnet.executeCommand(command, false, true);
@@ -265,10 +279,10 @@ std::pair<bool, std::string> AppModel::tlog(const std::string& filename)
         }
     }
 
-    auto result = downloadRemoteFile(filename);
+    auto result = downloadRemoteFile(m_telnet.pwd() + "/" + filename);
     if(result.first){
         notify("Removing file from remote host...");
-        deleteRemoteFile(filename);
+        deleteRemoteFile(m_telnet.pwd() + "/" + filename);
     }
     return result;
 }
