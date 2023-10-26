@@ -14,7 +14,7 @@ RemoteEnvTool is a powerful command-line tool designed to monitor local source c
 ## Features
 - **Source Monitoring:** Real-time detection of local source code modifications via github status parsing.
 - **FTP Integration:** Securely transfer updated source files to remote servers.
-- **Telnet Execution:** Automated Telnet script execution to set up and rebuild environments.
+- **Telnet Execution:** Automated telnet continuous script execution.
 - **Interactive Mode:** Engaging command-line interface for managing and synchronizing code.
 
 ## Configuration
@@ -31,7 +31,7 @@ For each remote environment you want to manage, define a host configuration:
 - `HOST`: Name or IP of the remote server.
 - `USERNAME`: FTP username for accessing the remote server.
 - `PASSWORD`: FTP password for the above username.
-- `REMOTE_PATH`: Directory path on the remote server where the code should be transferred. (can be blank)
+- `REMOTE_PATH`: Directory path on the remote server where the code should be transferred. (if empty, it will try to find this path via telnet script)
 - `SCRIPT`: Telnet script that the tool should run after connecting for the first time. ('.' dot will be added)
 - `PORT`: Port on which Telnet service runs, default is 23.
 
