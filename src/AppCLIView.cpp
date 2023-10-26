@@ -1,6 +1,7 @@
 #include "AppCLIView.hpp"
 #include <iostream>
 #include "Utils.hpp"
+#include "Version.hpp"
 
 AppCLIView::AppCLIView(AppModel& model, const int& ar, char** av) : m_model(model), argc(ar), argv(av),
 opt("Allowed options"), m_features(model, *this)
@@ -183,5 +184,6 @@ void AppCLIView::writeWhite(const std::string& text, const bool& addNewLine)
 
 void AppCLIView::writeHelp()
 {
+    std::cout << "RemoteEnvTool v" + VERSION << std::endl;
     std::cout << opt << std::endl;
 }
