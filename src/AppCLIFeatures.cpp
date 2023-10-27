@@ -85,6 +85,12 @@ void AppCLIFeatures::restart(AppCLIController& controller)
 
 void AppCLIFeatures::tlog(AppCLIController& controller)
 {
+    auto host = m_model.config().getCurrentHost();
+    if(!m_model.telnet().isConnected()){
+        if(!m_model.connectToTelnet(host)){
+            return;
+        }
+    }
     m_view.writeWhite("Filename which to save to (empty for current date): ");
     std::string filename = controller.read();
     if(filename.empty()){
